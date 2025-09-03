@@ -1,20 +1,11 @@
 <script>
 	import favicon from '$lib/assets/favicon.svg';
+	import "../app.css";
 
 	let { children } = $props();
 </script>
 
-<style>
-	* {
-		margin: 0px;
-	}
-
-	body {
-		background-color: #302424;
-		color: #f4f4f4;
-	}
-
-</style>
+<link rel="stylesheet" href="/assets/app.css">
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
