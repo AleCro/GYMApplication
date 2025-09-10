@@ -4,7 +4,7 @@
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
 	<div class="container-fluid">
-		<a class="navbar-brand" href="#">AleGYM</a>
+		<a class="navbar-brand" href="/">AleGYM</a>
 		<button
 			class="navbar-toggler"
 			type="button"
@@ -22,7 +22,7 @@
 					<a class="nav-link active" aria-current="page" href="/">Home</a>
 				</li>
 				<li class="nav-item">
-					<a class="nav-link" href="#">Calendar</a>
+					<a class="nav-link" href="/calendar">Calendar</a>
 				</li>
 			</ul>
 		</div>
@@ -38,6 +38,4 @@
 			<h1>Welcome back, <span style="color: blue">{name}</span>!</h1>
 		</div>
 	</div>
-
-	
 </div>
