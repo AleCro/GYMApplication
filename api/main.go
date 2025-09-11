@@ -1,6 +1,7 @@
 package main
 
 import (
+	"GYMAppAPI/Config"
 	"fmt"
 	"net/http"
 
@@ -17,8 +18,10 @@ type LoginForm struct {
 }
 
 func main() {
+	Config.Load()
+	fmt.Printf("Config.DATABASE_CONNECTION_STRING: %v\n", Config.DATABASE_CONNECTION_STRING)
 	client, err := mongo.Connect(options.Client().
-		ApplyURI("[censored for now]"))
+		ApplyURI(Config.DATABASE_CONNECTION_STRING))
 	if err != nil {
 		panic(err)
 	}
