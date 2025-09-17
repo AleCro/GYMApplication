@@ -1,6 +1,23 @@
+import { API_URL } from '$lib/config.js';
+
+/** @type {import('@sveltejs/kit').Handle} */
 export async function handle({ event, resolve }) {
-    const session = event.cookies.get("session");
-    event.locals.user = session ? { id: 1, name: "Alejandre" } : null;
-    console.log(session);
+    const sessionId = event.cookies.get('session');
+    console.log(sessionId);
+
+    try {
+        let res = await fetch(API_URL + "/session", {
+            method: "POST",
+            body: JSON.stringify({ s: sessionId })
+        });
+        // let x = (res.text());
+        
+        let resp = await res.json();
+        event.locals.user = resp;
+    } catch (e) {
+        console.error(e);
+    }
+
+
     return resolve(event);
 }

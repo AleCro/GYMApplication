@@ -4,6 +4,10 @@ import (
 	"os"
 )
 
+const DATABASE_NAME string = "gymapp"
+const DATABASE_USER_COLLECTION string = "usersgym"
+const DATABASE_SESSION_COLLECTION string = "sessionsgym"
+
 var DATABASE_CONNECTION_STRING string
 
 func Load() {

@@ -2,13 +2,32 @@
 	import { onMount } from 'svelte';
 	import { API_URL } from '$lib/config.js';
 
+	function setCookie(name, value, days) {
+		let expires = '';
+		if (days) {
+			let date = new Date();
+			date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+			expires = '; expires=' + date.toUTCString();
+		}
+		document.cookie = name + '=' + (value || '') + expires + '; path=/';
+	}
+
 	let username = '';
 	let password = '';
 	function aleLogin(username, password) {
-		fetch(API_URL + "/login", {
-      method: "POST",
-      body: JSON.stringify(username, password)
-    }).then(res => res.json()).then(console.log).catch(console.error);
+		fetch(API_URL + '/login', {
+			method: 'POST',
+			body: JSON.stringify({ username, password })
+		})
+			.then((res) => res.json())
+			.then((res) => {
+				if (Object.keys(res) == 0) {
+					return;
+				}
+				setCookie('session', res.session, 7);
+				window.location = "/";
+			})
+			.catch(console.error);
 	}
 </script>
 
