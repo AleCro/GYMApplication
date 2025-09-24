@@ -14,9 +14,8 @@ export async function handle({ event, resolve }) {
         
         let resp = await res.json();
         event.locals.user = resp;
-    } catch (e) {
-        console.error(e);
-    }
+        event.locals.user.session = sessionId;
+    } catch (e) {}
 
 
     return resolve(event);

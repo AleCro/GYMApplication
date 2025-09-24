@@ -15,7 +15,7 @@
 	let username = '';
 	let password = '';
 	function aleLogin(username, password) {
-		fetch(API_URL + '/login', {
+		fetch('/login', {
 			method: 'POST',
 			body: JSON.stringify({ username, password })
 		})

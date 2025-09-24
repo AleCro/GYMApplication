@@ -15,6 +15,7 @@ type User struct {
 	Username string `bson:"username" json:"username"`
 	// "If deserialized to JSON it's empty for a reason"
 	Password                 string      `bson:"password" json:"password,omitempty"`
+	Notes                    string      `bson:"notes" json:"notes"`
 	CurrentTargetMuscleGroup MuscleGroup `bson:"cTargetMuscleGroup" json:"cTargetMuscleGroup"`
 }
 

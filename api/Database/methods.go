@@ -73,3 +73,14 @@ func (db *Database) UserFindUsername(username string) (*User, bool, error) {
 	}
 	return res, true, nil
 }
+
+func (db *Database) UpdateNotes(username string, newNotes string) (*User, bool, error) {
+	collection := db.client.Database(Config.DATABASE_NAME).Collection(Config.DATABASE_USER_COLLECTION)
+	filter := bson.M{"username": username}
+	update := bson.M{"$set": bson.M{"notes": newNotes}}
+	_, err := collection.UpdateOne(db.ctx, filter, update)
+	if err != nil {
+		return nil, false, err
+	}
+	return db.UserFindUsername(username)
+}

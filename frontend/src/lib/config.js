@@ -1,1 +1,1 @@
-export const API_URL = "https://alegymapp.yxl.dev";
+export const API_URL = "https://api-gym.alecro.click";

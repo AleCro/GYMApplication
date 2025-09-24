@@ -15,6 +15,11 @@ type LoginForm struct {
 	Password string `json:"password"`
 }
 
+type NotesForm struct {
+	Notes   string `json:"notes"`
+	Session string `json:"session"`
+}
+
 type SessionAuth struct {
 	Session string `json:"s"`
 }
@@ -45,6 +50,8 @@ func main() {
 			return
 		}
 
+		fmt.Println(LoginReq)
+
 		user, found, err := Database.Connection.UserFindUsername(LoginReq.Username)
 		if err != nil {
 			// Internal Server Error
@@ -69,7 +76,48 @@ func main() {
 		Util.SendJSON(200, map[string]interface{}{
 			"session": session.SessionID,
 		}, w)
-		return
+	}))
+
+	http.HandleFunc("/notes", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		var NotesReq *NotesForm = &NotesForm{}
+		err := Util.DeserializeRequest(&NotesReq, r)
+		if err != nil {
+			return
+		}
+
+		session, found, err := Database.Connection.SessionFind(NotesReq.Session)
+		if err != nil {
+			// Internal Server Error
+			return
+		}
+
+		if !found {
+			// Session not found
+			return
+		}
+
+		user, found, err := Database.Connection.UserFindUsername(session.Target)
+		if err != nil {
+			// Internal Server Error
+			return
+		}
+		if !found {
+			// User not found
+			return
+		}
+
+		user.Password = ""
+
+		user, _, err = Database.Connection.UpdateNotes(user.Username, NotesReq.Notes)
+
+		if err != nil {
+			// Error updating the notes
+		}
+
+		user.Password = ""
+
+		Util.SendJSON(200, user, w)
+
 	}))
 
 	http.HandleFunc("/session", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +163,7 @@ func main() {
 		w.WriteHeader(200)
 		w.Write([]byte("Hello"))
 	})
-	http.ListenAndServe(":80", nil)
+	http.ListenAndServe(":7284", nil)
 }
 
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
