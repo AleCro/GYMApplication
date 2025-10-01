@@ -24,8 +24,48 @@ type SessionAuth struct {
 	Session string `json:"s"`
 }
 
+// ==========================
+// Exercise data model
+// ==========================
+type Exercise struct {
+	Muscle    string   `json:"muscle"`
+	Exercises []string `json:"exercises"`
+}
+
+// Handler for /exercise
+func exerciseHandler(w http.ResponseWriter, r *http.Request) {
+	// Get query param ?muscle=chest
+	muscle := r.URL.Query().Get("muscle")
+
+	// Predefined exercise list
+	exerciseMap := map[string][]string{
+		"chest":     {"Push-ups", "Bench Press", "Chest Fly"},
+		"back":      {"Pull-ups", "Deadlift", "Barbell Row"},
+		"legs":      {"Squats", "Lunges", "Leg Press"},
+		"arms":      {"Bicep Curls", "Tricep Dips", "Hammer Curls"},
+		"shoulders": {"Overhead Press", "Lateral Raises", "Arnold Press"},
+	}
+
+	// Default response if no muscle is found
+	exercises, ok := exerciseMap[muscle]
+	if !ok {
+		http.Error(w, "Muscle not found. Try chest, back, legs, arms, shoulders.", http.StatusBadRequest)
+		return
+	}
+
+	// Build response
+	response := Exercise{
+		Muscle:    muscle,
+		Exercises: exercises,
+	}
+
+	// Send JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 func main() {
-	// Load environment vairables
+	// Load environment variables
 	Config.Load()
 	// Connect Database
 	_, err := Database.NewDatabase(Config.DATABASE_CONNECTION_STRING)
@@ -36,13 +76,14 @@ func main() {
 
 	fmt.Println("[Database] Connection Made")
 
-	// This will disconnect the database at the end of the main function
+	// Disconnect the database when main ends
 	defer func() {
 		if err := Database.Connection.Disconnect(); err != nil {
 			panic(err)
 		}
 	}()
 
+	// LOGIN route
 	http.HandleFunc("/login", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		var LoginReq *LoginForm = &LoginForm{}
 		err := Util.DeserializeRequest(&LoginReq, r)
@@ -54,22 +95,18 @@ func main() {
 
 		user, found, err := Database.Connection.UserFindUsername(LoginReq.Username)
 		if err != nil {
-			// Internal Server Error
 			return
 		}
 		if !found {
-			// User not found
 			return
 		}
 
 		if Util.Hash256(LoginReq.Password) != user.Password {
-			// Passwords do NOT match
 			return
 		}
 
 		session, err := Database.Connection.SessionCreate(user, Util.RandomString(12))
 		if err != nil {
-			// Internal Server Error
 			return
 		}
 
@@ -78,6 +115,7 @@ func main() {
 		}, w)
 	}))
 
+	// NOTES route
 	http.HandleFunc("/notes", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		var NotesReq *NotesForm = &NotesForm{}
 		err := Util.DeserializeRequest(&NotesReq, r)
@@ -87,22 +125,18 @@ func main() {
 
 		session, found, err := Database.Connection.SessionFind(NotesReq.Session)
 		if err != nil {
-			// Internal Server Error
 			return
 		}
 
 		if !found {
-			// Session not found
 			return
 		}
 
 		user, found, err := Database.Connection.UserFindUsername(session.Target)
 		if err != nil {
-			// Internal Server Error
 			return
 		}
 		if !found {
-			// User not found
 			return
 		}
 
@@ -120,6 +154,7 @@ func main() {
 
 	}))
 
+	// SESSION route
 	http.HandleFunc("/session", corsMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		var SessionReq *SessionAuth = &SessionAuth{}
 		err := Util.DeserializeRequest(&SessionReq, r)
@@ -129,22 +164,18 @@ func main() {
 
 		session, found, err := Database.Connection.SessionFind(SessionReq.Session)
 		if err != nil {
-			// Internal Server Error
 			return
 		}
 
 		if !found {
-			// Session not found
 			return
 		}
 
 		user, found, err := Database.Connection.UserFindUsername(session.Target)
 		if err != nil {
-			// Internal Server Error
 			return
 		}
 		if !found {
-			// User not found
 			return
 		}
 
@@ -153,6 +184,12 @@ func main() {
 
 	}))
 
+	// ==========================
+	// EXERCISE route
+	// ==========================
+	http.HandleFunc("/exercise", corsMiddleware(exerciseHandler))
+
+	// ROOT route
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var data *LoginForm = nil
 		err := json.NewDecoder(r.Body).Decode(&data)
@@ -163,9 +200,14 @@ func main() {
 		w.WriteHeader(200)
 		w.Write([]byte("Hello"))
 	})
+
+	// Start server
 	http.ListenAndServe(":7284", nil)
 }
 
+// ==========================
+// CORS Middleware
+// ==========================
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
