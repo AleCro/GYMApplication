@@ -38,7 +38,7 @@
       window.location.href = '/notes';
     } catch (err) {
       console.error(err);
-      error = 'Cannot reach server';
+      error = err;
     }
   }
 </script>

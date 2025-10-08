@@ -1,30 +1,90 @@
 <script>
-	let { data } = $props(); 
-	let session = data.user.session;
-	let notes = $state();
+	import { onMount } from 'svelte';
 
-	let save = () => {
-		fetch("/notes", {
-			method: "POST",
-			body: JSON.stringify({
-				notes, session
-			})
-		}).then(res => res.json()).then(res => {
-			console.log(res);
-		}).catch(console.error);
+	export let data;
+
+	let session = data.user.session;
+	let notes = [...(data.user.notes || [])];
+
+	async function addNote() {
+		try {
+			const res = await fetch('/notes', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					note: '',
+					session
+				})
+			});
+
+			const json = await res.text();
+			notes = json.notes;
+			window.location.reload();
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+	async function updateNote(i, note) {
+		try {
+			const res = await fetch('/notes', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					note,
+					session,
+					i
+				})
+			});
+
+			const json = await res.text();
+			notes = json.notes;
+			window.location.reload();
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+	async function deleteNote(i) {
+		try {
+			const res = await fetch('/notes', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					session,
+					i
+				})
+			});
+			
+			const json = await res.text();
+			notes = json.notes;
+			window.location.reload();
+		} catch (err) {
+			console.error(err);
+		}
 	}
 </script>
 
 <div style="margin: 1em;">
+	<div>
+		<button class="btn btn-success" on:click={addNote}>+ Create Note</button>
+	</div>
+
 	<div class="row">
-		<div class="col-md-5">
-			<textarea bind:value={notes} class="form-control">{data.user.notes}</textarea>
-			<br>
-			<button class="btn btn-primary" on:click={save}>Save</button>
-			<br>
-		</div>
-		<div class="col-md-9">
-			<h1>Notes: <span style="color: blue">{notes}</span></h1>
-		</div>
+		{#each notes as note, i}
+			<div class="col-md-5" style="margin: 1em;">
+				<p>Note {i + 1}</p>
+				<textarea
+					class="form-control"
+					bind:value={notes[i]}
+					on:blur={() => updateNote(i, notes[i])}
+				></textarea>
+
+				<div style="margin-top: 0.5em;">
+					<button class="btn btn-primary" on:click={() => updateNote(i, notes[i])}>Save</button>
+					<button class="btn btn-danger" on:click={() => deleteNote(i)}>Delete</button>
+				</div>
+			</div>
+		{/each}
 	</div>
 </div>

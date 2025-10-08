@@ -4,6 +4,7 @@ import (
 	"GYMAppAPI/Config"
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -74,13 +75,52 @@ func (db *Database) UserFindUsername(username string) (*User, bool, error) {
 	return res, true, nil
 }
 
-func (db *Database) UpdateNotes(username string, newNotes string) (*User, bool, error) {
-	collection := db.client.Database(Config.DATABASE_NAME).Collection(Config.DATABASE_USER_COLLECTION)
-	filter := bson.M{"username": username}
-	update := bson.M{"$set": bson.M{"notes": newNotes}}
-	_, err := collection.UpdateOne(db.ctx, filter, update)
+func (db *Database) UserFromSession(sessionID string) (*User, bool, error) {
+	session, found, err := db.SessionFind(sessionID)
 	if err != nil {
 		return nil, false, err
 	}
-	return db.UserFindUsername(username)
+
+	if !found {
+		return nil, false, nil
+	}
+
+	return db.UserFindUsername(session.Target)
+}
+
+func (db *Database) UpdateNote(username string, i int, newNotes string) error {
+	collection := db.client.Database(Config.DATABASE_NAME).Collection(Config.DATABASE_USER_COLLECTION)
+	filter := bson.M{"username": username}
+	update := bson.M{"$set": bson.M{fmt.Sprintf("notes.%v", i): newNotes}}
+	_, err := collection.UpdateOne(db.ctx, filter, update)
+	return err
+}
+
+func (db *Database) DeleteNote(username string, index int) error {
+	collection := db.client.Database(Config.DATABASE_NAME).Collection(Config.DATABASE_USER_COLLECTION)
+	filter := bson.M{"username": username}
+	var result struct {
+		Notes []string `bson:"notes"`
+	}
+	err := collection.FindOne(db.ctx, filter).Decode(&result)
+	if err != nil {
+		return err
+	}
+
+	if index < 0 || index >= len(result.Notes) {
+		return fmt.Errorf("index %d out of range", index)
+	}
+
+	result.Notes = append(result.Notes[:index], result.Notes[index+1:]...)
+	update := bson.M{"$set": bson.M{"notes": result.Notes}}
+	_, err = collection.UpdateOne(db.ctx, filter, update)
+	return err
+}
+
+func (db *Database) AddNoteToUser(username string, note string) error {
+	collection := db.client.Database(Config.DATABASE_NAME).Collection(Config.DATABASE_USER_COLLECTION)
+	filter := bson.M{"username": username}
+	update := bson.M{"$push": bson.M{"notes": note}}
+	_, err := collection.UpdateOne(db.ctx, filter, update)
+	return err
 }

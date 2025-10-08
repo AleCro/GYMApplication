@@ -14,9 +14,15 @@ type Database struct {
 type User struct {
 	Username string `bson:"username" json:"username"`
 	// "If deserialized to JSON it's empty for a reason"
-	Password                 string      `bson:"password" json:"password,omitempty"`
-	Notes                    string      `bson:"notes" json:"notes"`
-	CurrentTargetMuscleGroup MuscleGroup `bson:"cTargetMuscleGroup" json:"cTargetMuscleGroup"`
+	Password string           `bson:"password" json:"password,omitempty"`
+	Notes    []string         `json:"notes"`
+	Calendar []*CalendarEvent `json:"calendar"`
+}
+
+type CalendarEvent struct {
+	Date    string `json:"date"`
+	Title   string `json:"title"`
+	Details string `json:"details"`
 }
 
 type Session struct {

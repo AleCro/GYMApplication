@@ -10,7 +10,6 @@ export async function handle({ event, resolve }) {
             method: "POST",
             body: JSON.stringify({ s: sessionId })
         });
-        // let x = (res.text());
         
         let resp = await res.json();
         event.locals.user = resp;
