@@ -34,6 +34,13 @@ type AddNoteForm struct {
 	Note    string `json:"note"`
 }
 
+// Add Event form structure
+type AddEvent struct {
+	Session string `json:"session"`
+	Title   string `json:"title"`
+	Time    uint64 `json:"time"`
+}
+
 // Add Note form structure
 type UpdateNoteForm struct {
 	Session string `json:"session"`
@@ -45,12 +52,6 @@ type UpdateNoteForm struct {
 type DeleteNoteForm struct {
 	Session string `json:"session"`
 	Index   int    `json:"i"`
-}
-
-// Calendar form structure
-type CalendarForm struct {
-	Session string                  `json:"session"`
-	Event   *Database.CalendarEvent `json:"event"`
 }
 
 // Session request structure
@@ -157,6 +158,31 @@ func addNoteHandler(w http.ResponseWriter, r *http.Request) {
 	sendJSON(200, user, w)
 }
 
+// ADD EVENT route
+func addEventHandler(w http.ResponseWriter, r *http.Request) {
+	var req AddEvent
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	user, found, err := Database.Connection.UserFromSession(req.Session)
+	if !found {
+		return
+	}
+
+	if err != nil {
+		return
+	}
+
+	Database.Connection.AddCalendarEvent(user.Username, &Database.CalendarEvent{
+		Name: req.Title,
+		Time: req.Time,
+	})
+
+	sendJSON(200, user, w)
+}
+
 // UPDATE NOTE route
 func updateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	var req UpdateNoteForm
@@ -217,30 +243,6 @@ func deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
 	sendJSON(200, map[string]any{"success": true}, w)
 }
 
-// ADD CALENDAR EVENT route
-func calendarHandler(w http.ResponseWriter, r *http.Request) {
-	var req CalendarForm
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-
-	sendJSON(200, nil, w)
-}
-
-// GET CALENDAR route
-func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Session string `json:"session"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-
-	sendJSON(200, nil, w)
-}
-
 // EXERCISE route
 func exerciseHandler(w http.ResponseWriter, r *http.Request) {
 	muscle := r.URL.Query().Get("muscle")
@@ -264,6 +266,7 @@ func exerciseHandler(w http.ResponseWriter, r *http.Request) {
 
 // ROOT route
 func rootHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
 	w.Write([]byte("GYMApp API running ✅"))
 }
 
@@ -333,10 +336,10 @@ func main() {
 	http.HandleFunc("/session", corsMiddleware(sessionHandler))
 	http.HandleFunc("/login", corsMiddleware(loginHandler))
 	http.HandleFunc("/addnote", corsMiddleware(addNoteHandler))
+	http.HandleFunc("/addevent", corsMiddleware(addEventHandler))
 	http.HandleFunc("/updatenote", corsMiddleware(updateNoteHandler))
 	http.HandleFunc("/deletenote", corsMiddleware(deleteNoteHandler))
-	http.HandleFunc("/calendar", corsMiddleware(calendarHandler))
-	http.HandleFunc("/getcalendar", corsMiddleware(getCalendarHandler))
+	http.HandleFunc("/calendar", corsMiddleware(addEventHandler))
 	http.HandleFunc("/exercise", corsMiddleware(exerciseHandler))
 
 	http.ListenAndServe(":7284", nil)

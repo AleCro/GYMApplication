@@ -3,7 +3,7 @@ import { API_URL } from '$lib/config.js'; // <-- Add this
 export async function POST({ request }) {
   const body = await request.text();
 
-  const res = await fetch(`${API_URL}/addnote`, {
+  const res = await fetch(`${API_URL}/calendar`, {
     method: "POST",
     headers: {
       "Content-Type": request.headers.get("Content-Type") || "application/json",

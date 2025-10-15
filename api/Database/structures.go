@@ -20,9 +20,8 @@ type User struct {
 }
 
 type CalendarEvent struct {
-	Date    string `json:"date"`
-	Title   string `json:"title"`
-	Details string `json:"details"`
+	Name string `json:"title" bson:"name"`
+	Time uint64 `json:"time" bson:"time"`
 }
 
 type Session struct {

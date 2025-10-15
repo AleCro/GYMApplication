@@ -124,3 +124,11 @@ func (db *Database) AddNoteToUser(username string, note string) error {
 	_, err := collection.UpdateOne(db.ctx, filter, update)
 	return err
 }
+
+func (db *Database) AddCalendarEvent(username string, cal *CalendarEvent) error {
+	collection := db.client.Database(Config.DATABASE_NAME).Collection(Config.DATABASE_USER_COLLECTION)
+	filter := bson.M{"username": username}
+	update := bson.M{"$push": bson.M{"calendar": cal}}
+	_, err := collection.UpdateOne(db.ctx, filter, update)
+	return err
+}
