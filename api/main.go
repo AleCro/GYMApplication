@@ -246,21 +246,17 @@ func deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
 // EXERCISE route
 func exerciseHandler(w http.ResponseWriter, r *http.Request) {
 	muscle := r.URL.Query().Get("muscle")
-	exerciseMap := map[string][]string{
-		"chest":     {"Push-ups", "Bench Press", "Chest Fly"},
-		"back":      {"Pull-ups", "Deadlift", "Barbell Row"},
-		"legs":      {"Squats", "Lunges", "Leg Press"},
-		"arms":      {"Bicep Curls", "Tricep Dips", "Hammer Curls"},
-		"shoulders": {"Overhead Press", "Lateral Raises", "Arnold Press"},
-	}
 
-	exercises, ok := exerciseMap[muscle]
+	exercises, ok := ExerciseMap[muscle]
 	if !ok {
 		http.Error(w, "Muscle not found", http.StatusBadRequest)
 		return
 	}
 
-	response := Exercise{Muscle: muscle, Exercises: exercises}
+	response := map[string]any{
+		"muscle":    muscle,
+		"exercises": exercises,
+	}
 	sendJSON(200, response, w)
 }
 
