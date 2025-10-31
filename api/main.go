@@ -106,7 +106,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(LoginReq)
 
 	user, found, err := Database.Connection.UserFindUsername(LoginReq.Username)
 	if err != nil {
@@ -321,6 +320,7 @@ func main() {
 	Config.Load()
 	// Connect Database
 	_, err := Database.NewDatabase(Config.DATABASE_CONNECTION_STRING)
+	// hello
 
 	if err != nil {
 		panic(err)

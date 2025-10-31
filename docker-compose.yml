@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  backend:
+    container_name: GYMAppBackend
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_CONNECTION_STRING=mongodb+srv://alecoroxd:S0meth1ngVeryS3kurE@cluster0.3jzawcr.mongodb.net/
+      - GO_ENV=development
+    volumes:
+      - ./api:/app
+    ports:
+      - "7284:7284"
+    command: air
+    depends_on:
+      - mongo
+    networks:
+      - devnet
+    restart: unless-stopped
+
+  api:
+    container_name: GYMAppFrontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app
+      - node_modules_data:/app/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - devnet
+    restart: unless-stopped
+
+  code:
+    container_name: code-server
+    image: codercom/code-server:latest
+    user: root
+    environment:
+      - PASSWORD=Ale
+    volumes:
+      - ./api:/home/coder/project/api
+      - ./frontend:/home/coder/project/frontend
+      - ./development/code-server:/home/coder/.local/share/code-server
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8443:8080"    # host 8443 -> container 8080 (code-server default)
+    networks:
+      - devnet
+    restart: unless-stopped
+
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    restart: unless-stopped
+    volumes:
+      - ./development/database:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - devnet
+    environment:
+      - TZ=UTC
+
+networks:
+  devnet:
+    driver: bridge
+
+volumes:
+  node_modules_data:
