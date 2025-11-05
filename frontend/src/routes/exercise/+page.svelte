@@ -2,10 +2,6 @@
   import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
 
-  // --- API Base URL ---
-  const API_URL = 'http://localhost:7284';
-  // const API_URL = 'https://api-gym.alecro.click'; // for deployment
-
   // --- Muscles ---
   let muscles = [
     'chest', 'back', 'shoulders', 'arms', 'biceps', 'triceps',
@@ -77,7 +73,7 @@
     loading = true;
 
     try {
-      const res = await fetch(`${API_URL}/exercise?muscle=${encodeURIComponent(muscle.toLowerCase())}`);
+      const res = await fetch(`/exercise?muscle=${encodeURIComponent(muscle.toLowerCase())}`);
       if (!res.ok) throw new Error('Muscle not found or API error');
       const data = await res.json();
 

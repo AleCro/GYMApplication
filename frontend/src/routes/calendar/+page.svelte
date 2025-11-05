@@ -1,13 +1,11 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, createEventDispatcher } from 'svelte';
+	const dispatch = createEventDispatcher();
 
 	export let data = {
 		user: {
-			calendar: [
-				{ name: 'Doctor Appointment', time: 1760481795952 },
-				{ name: 'Team Meeting', time: 1760475600000 },
-				{ name: 'Birthday Party', time: 1760562000000 }
-			]
+			session: '',
+			calendar: []
 		}
 	};
 
@@ -33,26 +31,44 @@
 		return t;
 	}
 
+	function getToday() {
+		const t = new Date();
+		t.setHours(0, 0, 0, 0);
+		return t;
+	}
+
 	let events = [];
 	let displayedMonth;
 	let displayedYear;
 	let calendar = [];
-	const today = new Date();
 
-	function formatTime(date) {
-		return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	function formatTime(date, timezone) {
+		return new Intl.DateTimeFormat('en-US', {
+			hour: '2-digit',
+			minute: '2-digit',
+			timeZone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+		}).format(date);
 	}
 
 	function parseEvents() {
-		const raw = data && data.user && Array.isArray(data.user.calendar) ? data.user.calendar : [];
+		const raw = data && data.user && Array.isArray(data.user.calendar)
+			? data.user.calendar
+			: [];
+
 		events = raw
 			.map((e, i) => {
 				const ms = toMs(e.time);
 				if (!ms) return null;
 				const d = new Date(ms);
-				// create a stable unique id per input index (ms + index)
 				const id = `${ms}-${i}`;
-				return { ...e, timeMs: ms, date: d, id };
+				return {
+					...e,
+					title: e.title || e.name,
+					timeMs: ms,
+					date: d,
+					id,
+					originalIndex: i
+				};
 			})
 			.filter(Boolean)
 			.sort((a, b) => a.timeMs - b.timeMs);
@@ -60,6 +76,7 @@
 
 	function chooseInitialMonthYear() {
 		if (events.length === 0) {
+			const today = getToday();
 			displayedMonth = today.getMonth();
 			displayedYear = today.getFullYear();
 			return;
@@ -108,6 +125,7 @@
 		}
 		buildCalendar();
 	}
+
 	function nextMonth() {
 		if (displayedMonth === 11) {
 			displayedMonth = 0;
@@ -117,13 +135,14 @@
 		}
 		buildCalendar();
 	}
+
 	function goToToday() {
-		displayedMonth = today.getMonth();
-		displayedYear = today.getFullYear();
+		const t = getToday();
+		displayedMonth = t.getMonth();
+		displayedYear = t.getFullYear();
 		buildCalendar();
 	}
 
-	// Only reinitialize when `data` actually changes (avoid resetting when user navigates months)
 	let _lastDataJson = '';
 	$: {
 		const json = JSON.stringify(data || {});
@@ -136,30 +155,20 @@
 	}
 
 	onMount(() => {
-		// initial parse in case data was set before mount (defensive)
 		parseEvents();
 		chooseInitialMonthYear();
 		buildCalendar();
 	});
 
-	import { createEventDispatcher } from 'svelte';
-
-	const dispatch = createEventDispatcher();
-
-	// Form state
 	let title = '';
-	// default date to today (YYYY-MM-DD)
-	let dateValue = new Date().toISOString().slice(0, 10);
-	// default time to current hour:minute
 	const pad = (n) => String(n).padStart(2, '0');
 	const now = new Date();
+	let dateValue = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 	let timeValue = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-
 	let loading = false;
 	let successMsg = '';
 	let errorMsg = '';
 
-	// Basic client-side validation
 	function validate() {
 		if (!title.trim()) {
 			errorMsg = 'Please enter a title for the event.';
@@ -169,19 +178,15 @@
 			errorMsg = 'Please pick a date.';
 			return false;
 		}
-		// time is optional; but we keep it required in UI
 		return true;
 	}
 
-	// Convert local date + time string to millisecond timestamp
 	function dateTimeToMs(dateStr, timeStr) {
-		// If timeStr missing, set to 00:00
-		const t = timeStr && timeStr.trim() ? timeStr : '00:00';
-		// Create a local ISO-like string and use Date constructor
-		// e.g. "2025-10-14T13:30"
-		const iso = `${dateStr}T${t}`;
-		const d = new Date(iso);
-		return d.getTime();
+		const [year, month, day] = dateStr.split('-').map(Number);
+		const [hour, minute] = (timeStr || '00:00').split(':').map(Number);
+		const localDate = new Date(year, month - 1, day, hour, minute, 0, 0);
+		const utcMs = localDate.getTime() - localDate.getTimezoneOffset() * 60000;
+		return utcMs;
 	}
 
 	async function submitForm(e) {
@@ -197,10 +202,12 @@
 			return;
 		}
 
+		//  Include timezone in payload
 		const payload = {
 			session: data.user.session,
 			title: title.trim(),
-			time: timeMs
+			time: timeMs,
+			timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
 		};
 
 		loading = true;
@@ -208,71 +215,75 @@
 		try {
 			const res = await fetch('/calendar', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload)
 			});
 
-			if (!res.ok) {
-				// try to parse a helpful message from the server response
-				let text;
-				try {
-					text = await res.text();
-				} catch (err) {
-					text = res.statusText;
-				}
-				throw new Error(`Server responded ${res.status}: ${text}`);
-			}
-
-			let returned;
-			try {
-				returned = await res.json();
-			} catch {
-				returned = payload;
-			}
+			if (!res.ok) throw new Error('Failed to save event.');
 
 			data.user.calendar.push({
 				title: title.trim(),
-				time: timeMs
+				time: timeMs,
+				timezone: payload.timezone
 			});
 
 			data.user.calendar = data.user.calendar;
-
 			buildCalendar();
 			successMsg = 'Event saved.';
-			dispatch('eventAdded', returned);
+			dispatch('eventAdded', payload);
 			title = '';
 		} catch (err) {
-			console.error(err);
 			errorMsg = err.message || 'Failed to save event.';
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function deleteEvent(index) {
+		if (!confirm('Delete this event?')) return;
+
+		try {
+			const res = await fetch('/deleteevent', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ session: data.user.session, i: index })
+			});
+
+			if (!res.ok) throw new Error('Failed to delete event.');
+
+			data.user.calendar.splice(index, 1);
+			data.user.calendar = data.user.calendar;
+			buildCalendar();
+		} catch (err) {
+			alert(err || 'Error deleting event.');
+		}
+	}
+
+	function setToday() {
+		const t = getToday();
+		const pad = (n) => String(n).padStart(2, '0');
+		dateValue = `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`;
+		timeValue = `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`;
+		displayedMonth = t.getMonth();
+		displayedYear = t.getFullYear();
+		buildCalendar();
 	}
 </script>
 
 <div class="container mt-4">
 	<div class="d-flex justify-content-between align-items-center mb-2">
 		<div>
-			<button class="btn btn-outline-primary me-1" on:click={prevMonth} aria-label="Previous month"
-				>&laquo; Prev</button
-			>
-			<button class="btn btn-outline-primary me-2" on:click={nextMonth} aria-label="Next month"
-				>Next &raquo;</button
-			>
+			<button class="btn btn-outline-primary me-1" on:click={prevMonth}>&laquo; Prev</button>
+			<button class="btn btn-outline-primary me-2" on:click={nextMonth}>Next &raquo;</button>
 			<button class="btn btn-secondary" on:click={goToToday}>Today</button>
 		</div>
 
 		<h3 class="mb-0">
-			{new Date(displayedYear, displayedMonth).toLocaleString('default', { month: 'long' })}
-			{displayedYear}
+			{new Date(displayedYear, displayedMonth).toLocaleString('default', { month: 'long' })} {displayedYear}
 		</h3>
 
 		<div>
-			<span class="small text-muted"
-				>{events.length} event{events.length !== 1 ? 's' : ''} total</span
-			>
+			<span class="small text-muted">{events.length} event{events.length !== 1 ? 's' : ''} total</span>
 		</div>
 	</div>
 
@@ -289,12 +300,12 @@
 					<tr>
 						{#each week as day}
 							{#if !day}
-								<td class="align-top" style="height:110px; vertical-align:top;"></td>
+								<td class="align-top" style="height:110px;"></td>
 							{:else}
 								<td class="align-top" style="height:110px; vertical-align:top; width:14%;">
 									<div class="d-flex justify-content-between align-items-start">
 										<small class="text-muted">{day.getDate()}</small>
-										{#if sameLocalDate(day, today)}
+										{#if sameLocalDate(day, getToday())}
 											<span class="badge bg-success">Today</span>
 										{/if}
 									</div>
@@ -302,9 +313,20 @@
 									<div class="mt-2" style="max-height:65px; overflow:auto;">
 										{#each getEventsForDate(day) as ev (ev.id)}
 											<div class="card mb-1" style="font-size:0.85rem;">
-												<div class="card-body p-2">
-													<div class="fw-semibold">{ev.title}</div>
-													<div class="small text-muted">{formatTime(ev.date)}</div>
+												<div class="card-body p-2 d-flex justify-content-between align-items-center">
+													<div>
+														<div class="fw-semibold">{ev.title}</div>
+														<div class="small text-muted">
+															{formatTime(ev.date, ev.timezone)}
+														</div>
+													</div>
+													<button
+														class="btn btn-sm btn-outline-danger ms-2"
+														title="Delete event"
+														on:click={() => deleteEvent(ev.originalIndex)}
+													>
+														🗑️
+													</button>
 												</div>
 											</div>
 										{/each}
@@ -337,32 +359,39 @@
 		</div>
 	</div>
 
-	<div class="d-flex gap-2">
-		<button type="submit" class="btn btn-primary" disabled={loading}>
-			{#if loading}
-				<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-				Saving...
-			{:else}
-				Add event
-			{/if}
+	<div class="d-flex justify-content-between align-items-center mt-3">
+		<button type="button" class="btn btn-outline-primary" on:click={prevMonth}>
+			&laquo; Prev
 		</button>
 
-		<button
-			type="button"
-			class="btn btn-secondary"
-			on:click={() => {
-				title = '';
-			}}
-		>
-			Clear title
+		<div class="d-flex justify-content-center gap-3">
+			<button type="submit" class="btn btn-primary" disabled={loading}>
+				{#if loading}
+					<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving...
+				{:else}
+					Add Event
+				{/if}
+			</button>
+
+			<button type="button" class="btn btn-secondary" on:click={() => (title = '')}>
+				Clear Title
+			</button>
+
+			<button type="button" class="btn btn-outline-info" on:click={setToday}>
+				Today
+			</button>
+		</div>
+
+		<button type="button" class="btn btn-outline-primary" on:click={nextMonth}>
+			Next &raquo;
 		</button>
 	</div>
 
 	{#if successMsg}
-		<div class="alert alert-success mt-3" role="alert">{successMsg}</div>
+		<div class="alert alert-success mt-3">{successMsg}</div>
 	{/if}
 	{#if errorMsg}
-		<div class="alert alert-danger mt-3" role="alert">{errorMsg}</div>
+		<div class="alert alert-danger mt-3">{errorMsg}</div>
 	{/if}
 </form>
 

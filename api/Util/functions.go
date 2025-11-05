@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"golang.org/x/exp/rand"
 )
@@ -38,4 +39,9 @@ func RandomString(n int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
+}
+
+// CurrentDate returns the current date in YYYY-MM-DD format.
+func CurrentDate() string {
+	return time.Now().Format("2006-01-02")
 }

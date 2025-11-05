@@ -8,7 +8,7 @@ export async function handle({ event, resolve }) {
     try {
         let res = await fetch(API_URL + "/session", {
             method: "POST",
-            body: JSON.stringify({ s: sessionId })
+            body: JSON.stringify({ session: sessionId })
         });
         
         let resp = await res.json();

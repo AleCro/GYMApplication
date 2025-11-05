@@ -8,7 +8,9 @@
     { label: 'Home', href: '/' },
     { label: 'Notes', href: '/notes' },
     { label: 'Calendar', href: '/calendar' },
-    { label: 'Exercise', href: '/exercise' }
+    { label: 'Exercise', href: '/exercise' },
+    { label: 'Progress', href: '/progress' },
+    { label: 'Goals', href: '/goals' },
   ];
 
   // reactive current path so Svelte updates on client-side navigation

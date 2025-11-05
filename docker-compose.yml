@@ -7,7 +7,7 @@ services:
       context: ./api
       dockerfile: Dockerfile
     environment:
-      - DATABASE_CONNECTION_STRING=mongodb+srv://alecoroxd:S0meth1ngVeryS3kurE@cluster0.3jzawcr.mongodb.net/
+      - DATABASE_CONNECTION_STRING=mongodb://mongo:27017
       - GO_ENV=development
     volumes:
       - ./api:/app
