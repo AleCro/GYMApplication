@@ -3,17 +3,26 @@ package main
 import (
 	"GYMAppAPI/Config"
 	"GYMAppAPI/Database"
+	"GYMAppAPI/Exercise"
 	"GYMAppAPI/Util"
+	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"sync"
+	"time"
 
-	"github.com/google/uuid" // Use google/uuid for generating unique IDs
+	// Use google/uuid for generating unique IDs
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+// ==========================
+// GLOBAL CONSTANTS
+// ==========================
+const UploadDir = "./uploads"
 
 // ==========================
 // STRUCTS & DATA MODELS
@@ -52,29 +61,26 @@ type DeleteNoteForm struct {
 	Index   int    `json:"i"`
 }
 
+// Generic delete form (shared by goals & progress)
+type DeleteForm struct {
+	Session string `json:"session"`
+	Index   int    `json:"i"`
+}
+
 // Session request structure
 type SessionAuth struct {
 	Session string `json:"session"`
 }
 
-// Exercise model
-type Exercise struct {
-	Muscle    string   `json:"muscle"`
-	Exercises []string `json:"exercises"`
+type AddGoalForm struct {
+	Session string   `json:"session"`
+	Title   string   `json:"title"`
+	Steps   []string `json:"steps"`
 }
-// Progress model - UPDATED to include ID field
-type ProgressEntry struct {
-	ID       string  `json:"id"` // NEW: Unique identifier for frontend deletion
-	Date     string  `json:"date"`
-	Weight   float64 `json:"weight"`
-	Message  string  `json:"message"`
-	PhotoURL string  `json:"photo"`
-}
-// Goal model (simple for MongoDB)
-type Goal struct {
-	Title     string   `json:"title"`
-	Steps     []string `json:"steps"`
-	Completed bool     `json:"completed"`
+
+type DeleteGoalForm struct {
+	Session string `json:"session"`
+	Index   int    `json:"i"`
 }
 
 // ==========================
@@ -117,7 +123,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-
 
 	user, found, err := Database.Connection.UserFindUsername(LoginReq.Username)
 	if err != nil {
@@ -187,7 +192,7 @@ func addEventHandler(w http.ResponseWriter, r *http.Request) {
 	Database.Connection.AddCalendarEvent(user.Username, &Database.CalendarEvent{
 		Name:     req.Title,
 		Time:     req.Time,
-		Timezone: req.Timezone, 
+		Timezone: req.Timezone,
 	})
 
 	sendJSON(200, user, w)
@@ -296,7 +301,7 @@ func deleteNoteHandler(w http.ResponseWriter, r *http.Request) {
 func exerciseHandler(w http.ResponseWriter, r *http.Request) {
 	muscle := r.URL.Query().Get("muscle")
 
-	exercises, ok := ExerciseMap[muscle]
+	exercises, ok := Exercise.ExerciseMap[muscle]
 	if !ok {
 		http.Error(w, "Muscle not found", http.StatusBadRequest)
 		return
@@ -346,107 +351,146 @@ func sessionHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ==========================
-// PROGRESS & GOAL HANDLERS (MongoDB-backed)
+// UPLOAD HANDLER (Base64-Compatible, No Filesystem Needed)
 // ==========================
+func uploadProgressHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("🟢 [uploadProgressHandler] triggered")
 
-type AddProgressForm struct {
-	Session string  `json:"session"`
-	Weight  float64 `json:"weight"`
-	Message string  `json:"message"`
-	Photo   string  `json:"photo"`
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		fmt.Println("❌ ParseMultipartForm error:", err)
+		sendJSON(400, map[string]any{
+			"success": false,
+			"message": "Invalid upload form",
+		}, w)
+		return
+	}
+
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		fmt.Println("❌ FormFile error:", err)
+		sendJSON(400, map[string]any{
+			"success": false,
+			"message": "No image file provided",
+		}, w)
+		return
+	}
+	defer file.Close()
+
+	// Convert file to Base64 directly (no saving)
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		fmt.Println("❌ Read file error:", err)
+		sendJSON(500, map[string]any{
+			"success": false,
+			"message": "Error reading file",
+		}, w)
+		return
+	}
+
+	mimeType := http.DetectContentType(fileBytes)
+	base64Str := fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(fileBytes))
+
+	fmt.Printf("✅ Uploaded %s as Base64 (%d bytes)\n", handler.Filename, len(fileBytes))
+
+	sendJSON(200, map[string]any{
+		"success": true,
+		"message": "Image converted to Base64 successfully",
+		"base64":  base64Str,
+	}, w)
 }
 
-// NEW STRUCT: For deleting progress by ID (as implemented in Svelte)
-type DeleteProgressForm struct {
-	Session string `json:"session"`
-	ID      string `json:"id"`
-}
-
-
-type AddGoalForm struct {
-	Session string   `json:"session"`
-	Title   string   `json:"title"`
-	Steps   []string `json:"steps"`
-}
-
-type UpdateGoalForm struct {
-	Session string `json:"session"`
-	Index   int    `json:"i"`
-	Done    bool   `json:"done"`
-}
-
-// Delete Goal form structure - NEW STRUCT
-type DeleteGoalForm struct {
-	Session string `json:"session"`
-	Index   int    `json:"i"`
-}
-
-// ADD PROGRESS - MODIFIED to generate a unique ID
+// ==========================
+// ADD PROGRESS (Return entry with string ID)
+// ==========================
 func addProgressHandler(w http.ResponseWriter, r *http.Request) {
-	var req AddProgressForm
+	var req struct {
+		Session string  `json:"session"`
+		Weight  float64 `json:"weight"`
+		Message string  `json:"message"`
+		Photo   string  `json:"photo"` // base64 or URL
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		sendJSON(400, map[string]any{"success": false, "message": "Invalid JSON body"}, w)
 		return
 	}
 
 	user, found, err := Database.Connection.UserFromSession(req.Session)
 	if err != nil || !found {
-		http.Error(w, "Invalid session", http.StatusUnauthorized)
+		sendJSON(401, map[string]any{"success": false, "message": "Invalid session"}, w)
 		return
 	}
 
 	entry := Database.ProgressEntry{
-		ID:       uuid.New().String(), // Generate unique ID
-		Date:     Util.CurrentDate(),
-		Weight:   req.Weight,
-		Message:  req.Message,
-		PhotoURL: req.Photo,
+		ID:      primitive.NewObjectID(),
+		Date:    time.Now().Format("2006-01-02"),
+		Weight:  req.Weight,
+		Message: req.Message,
+		Photo:   req.Photo,
 	}
-
-	err = Database.Connection.AddProgress(user.Username, entry)
-	if err != nil {
-		http.Error(w, "Could not save progress", http.StatusInternalServerError)
+	if err := Database.Connection.AddProgress(user.Username, entry); err != nil {
+		sendJSON(500, map[string]any{"success": false, "message": fmt.Sprintf("Failed to save progress: %v", err)}, w)
 		return
 	}
 
-	// Response uses the same ProgressEntry structure for consistency with the frontend
-	// Note: We cast the Database.ProgressEntry to the local ProgressEntry structure for JSON output
-	localEntry := ProgressEntry{
-		ID: entry.ID,
-		Date: entry.Date,
-		Weight: entry.Weight,
-		Message: entry.Message,
-		PhotoURL: entry.PhotoURL,
-	}
-
-	sendJSON(200, map[string]any{"success": true, "progress": localEntry}, w)
+	sendJSON(200, map[string]any{
+		"success": true,
+		"message": "Progress saved successfully!",
+		"data": map[string]any{
+			"id":          entry.ID.Hex(),
+			"date":        entry.Date,
+			"weight":      entry.Weight,
+			"message":     entry.Message,
+			"photoBase64": entry.Photo,
+		},
+	}, w)
 }
 
-// GET PROGRESS
+// ==========================
+// GET PROGRESS (Normalize IDs for frontend)
+// ==========================
 func getProgressHandler(w http.ResponseWriter, r *http.Request) {
-	var req SessionAuth
+	var req struct {
+		Session string `json:"session"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		sendJSON(400, map[string]any{"success": false, "message": "Invalid request"}, w)
 		return
 	}
 
 	user, found, err := Database.Connection.UserFromSession(req.Session)
 	if err != nil || !found {
-		http.Error(w, "Invalid session", http.StatusUnauthorized)
+		sendJSON(401, map[string]any{"success": false, "message": "Invalid session"}, w)
 		return
 	}
 
 	progress, err := Database.Connection.GetProgress(user.Username)
 	if err != nil {
-		http.Error(w, "Could not load progress", http.StatusInternalServerError)
+		sendJSON(500, map[string]any{"success": false, "message": "Failed to fetch progress"}, w)
 		return
 	}
 
-	sendJSON(200, progress, w)
+	out := make([]map[string]any, 0, len(progress))
+	for _, p := range progress {
+		out = append(out, map[string]any{
+			"id":          p.ID.Hex(),
+			"date":        p.Date,
+			"weight":      p.Weight,
+			"message":     p.Message,
+			"photoBase64": p.Photo,
+		})
+	}
+	sendJSON(200, out, w)
 }
 
-func removeProgressHandler(w http.ResponseWriter, r *http.Request) {
-	var req DeleteProgressForm
+// ==========================
+// DELETE PROGRESS
+// ==========================
+// DELETE PROGRESS HANDLER
+func deleteProgressHandler(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Session string `json:"session"`
+		ID      string `json:"id"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
@@ -458,20 +502,22 @@ func removeProgressHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the new DeleteProgress function using the entry ID
-	err = Database.Connection.DeleteProgress(user.Username, req.ID)
+	objID, err := primitive.ObjectIDFromHex(req.ID)
 	if err != nil {
-		// Log the actual error but return a generic internal error to the client
-		fmt.Printf("Error deleting progress entry %s for user %s: %v\n", req.ID, user.Username, err)
-		http.Error(w, "Failed to delete progress entry", http.StatusInternalServerError)
+		http.Error(w, "Invalid progress ID", http.StatusBadRequest)
 		return
 	}
 
-	sendJSON(200, map[string]any{"success": true}, w)
+	if err := Database.Connection.DeleteProgress(user.Username, objID); err != nil {
+		http.Error(w, fmt.Sprintf("Delete failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+	sendJSON(200, map[string]any{"success": true, "message": "Progress entry deleted!"}, w)
 }
 
-
+// ==========================
 // ADD GOAL
+// ==========================
 func addGoalHandler(w http.ResponseWriter, r *http.Request) {
 	var req AddGoalForm
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -500,7 +546,9 @@ func addGoalHandler(w http.ResponseWriter, r *http.Request) {
 	sendJSON(200, map[string]any{"success": true, "goal": goal}, w)
 }
 
+// ==========================
 // GET GOALS
+// ==========================
 func getGoalsHandler(w http.ResponseWriter, r *http.Request) {
 	var req SessionAuth
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -523,7 +571,9 @@ func getGoalsHandler(w http.ResponseWriter, r *http.Request) {
 	sendJSON(200, goals, w)
 }
 
+// ==========================
 // DELETE GOAL - NEW HANDLER
+// ==========================
 func deleteGoalHandler(w http.ResponseWriter, r *http.Request) {
 	var req DeleteGoalForm
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -547,9 +597,18 @@ func deleteGoalHandler(w http.ResponseWriter, r *http.Request) {
 	sendJSON(200, map[string]any{"success": true}, w)
 }
 
-// UPDATE GOAL
+// ==========================
+// UPDATE GOAL (Handles completion + steps)
+// ==========================
 func updateGoalHandler(w http.ResponseWriter, r *http.Request) {
-	var req UpdateGoalForm
+	var req struct {
+		Session string   `json:"session"`
+		Index   int      `json:"i"`
+		Done    *bool    `json:"done,omitempty"`
+		Steps   []string `json:"steps,omitempty"`
+		NewStep bool     `json:"newStep,omitempty"`
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
@@ -561,58 +620,65 @@ func updateGoalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = Database.Connection.UpdateGoal(user.Username, req.Index, req.Done)
-	if err != nil {
-		http.Error(w, "Could not update goal", http.StatusInternalServerError)
+	//  If "Steps" is provided → update steps
+	if req.Steps != nil {
+		if err := Database.Connection.UpdateGoalSteps(user.Username, req.Index, req.Steps); err != nil {
+			http.Error(w, "Could not update goal steps", http.StatusInternalServerError)
+			return
+		}
+		sendJSON(200, map[string]any{"success": true, "updated": "steps"}, w)
 		return
 	}
 
-	sendJSON(200, map[string]any{"success": true}, w)
+	//  Otherwise, treat as a completion update
+	if req.Done != nil {
+		if err := Database.Connection.UpdateGoal(user.Username, req.Index, *req.Done); err != nil {
+			http.Error(w, "Could not update goal", http.StatusInternalServerError)
+			return
+		}
+		sendJSON(200, map[string]any{"success": true, "updated": "completion"}, w)
+		return
+	}
+
+	http.Error(w, "No valid fields provided", http.StatusBadRequest)
 }
 
-// ==========================
-// UPLOAD HANDLER
-// ==========================
-func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+// ID PATCH
+func patchProgressIDsHandler(w http.ResponseWriter, r *http.Request) {
+	coll := Database.Connection.Client().Database(Config.DATABASE_NAME).Collection(Config.DATABASE_USER_COLLECTION)
 
-	r.ParseMultipartForm(20 << 20) // limit 20MB
-
-	file, handler, err := r.FormFile("image")
+	cursor, err := coll.Find(context.Background(), bson.M{})
 	if err != nil {
-		http.Error(w, "Missing image", http.StatusBadRequest)
+		http.Error(w, err.Error(), 500)
 		return
 	}
-	defer file.Close()
+	defer cursor.Close(context.Background())
 
-	// create uploads folder if missing
-	os.MkdirAll("uploads", os.ModePerm)
-
-	// generate unique name
-	ext := filepath.Ext(handler.Filename)
-	filename := fmt.Sprintf("%s_%s%s", Util.CurrentDate(), Util.RandomString(8), ext)
-	path := filepath.Join("uploads", filename)
-
-	dst, err := os.Create(path)
-	if err != nil {
-		http.Error(w, "Could not save file", http.StatusInternalServerError)
-		return
+	patchedUsers := 0
+	for cursor.Next(context.Background()) {
+		var user Database.User
+		if err := cursor.Decode(&user); err != nil {
+			continue
+		}
+		updated := false
+		for i := range user.Progress {
+			if user.Progress[i].ID.IsZero() {
+				user.Progress[i].ID = primitive.NewObjectID()
+				updated = true
+			}
+		}
+		if updated {
+			_, err := coll.UpdateOne(
+				context.Background(),
+				bson.M{"username": user.Username},
+				bson.M{"$set": bson.M{"progress": user.Progress}},
+			)
+			if err == nil {
+				patchedUsers++
+			}
+		}
 	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, file)
-	if err != nil {
-		http.Error(w, "Failed to write file", http.StatusInternalServerError)
-		return
-	}
-
-	Util.SendJSON(http.StatusOK, map[string]any{
-		"url":     fmt.Sprintf("/uploads/%s", filename),
-		"success": true,
-	}, w)
+	sendJSON(200, map[string]any{"patched_users": patchedUsers}, w)
 }
 
 // ==========================
@@ -648,7 +714,6 @@ func main() {
 
 	fmt.Println("[Server] GYMApp API starting on port 7284...")
 
-	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/session", corsMiddleware(sessionHandler))
 	http.HandleFunc("/login", corsMiddleware(loginHandler))
 	http.HandleFunc("/addnote", corsMiddleware(addNoteHandler))
@@ -662,15 +727,20 @@ func main() {
 	// Progress & Goals endpoints
 	http.HandleFunc("/addprogress", corsMiddleware(addProgressHandler))
 	http.HandleFunc("/getprogress", corsMiddleware(getProgressHandler))
-	http.HandleFunc("/removeprogress", corsMiddleware(removeProgressHandler))
+	http.HandleFunc("/deleteprogress", corsMiddleware(deleteProgressHandler))
+	http.HandleFunc("/upload", corsMiddleware(uploadProgressHandler))
+	http.HandleFunc("/patchprogressids", patchProgressIDsHandler)
+
 	http.HandleFunc("/addgoal", corsMiddleware(addGoalHandler))
 	http.HandleFunc("/getgoals", corsMiddleware(getGoalsHandler))
 	http.HandleFunc("/updategoal", corsMiddleware(updateGoalHandler))
 	http.HandleFunc("/deletegoal", corsMiddleware(deleteGoalHandler))
-	http.HandleFunc("/removeprogress", corsMiddleware(removeProgressHandler))
 
-	http.HandleFunc("/upload", corsMiddleware(uploadHandler))
-	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
+	// Serve uploaded images
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(UploadDir))))
+
+	// Put this at the very end!
+	http.HandleFunc("/", rootHandler)
 
 	http.ListenAndServe(":7284", nil)
 }

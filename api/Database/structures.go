@@ -1,9 +1,13 @@
+/*
+Defines the schema of the DB.
+*/
 package Database
 
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Database struct {
@@ -12,24 +16,23 @@ type Database struct {
 }
 
 type User struct {
-	Username string `bson:"username" json:"username"`
-	// "If deserialized to JSON it's empty for a reason"
-	Password string           `bson:"password" json:"password,omitempty"`
-	Notes    []string         `bson:"notes" json:"notes"`
-	Calendar []*CalendarEvent `bson:"calendar" json:"calendar"`
-	Progress []ProgressEntry  `bson:"progress" json:"progress"`
-	Goals    []Goal           `bson:"goals" json:"goals"`
-}
-
-type CalendarEvent struct {
-	Name string `json:"title" bson:"name"`
-	Time uint64 `json:"time" bson:"time"`
-	Timezone string `json:"timezone,omitempty"`
+	Username string          `bson:"username" json:"username"`
+	Password string          `bson:"password" json:"password,omitempty"`
+	Notes    []string        `bson:"notes" json:"notes"`
+	Calendar []CalendarEvent `bson:"calendar" json:"calendar"`
+	Progress []ProgressEntry `bson:"progress" json:"progress"`
+	Goals    []Goal          `bson:"goals" json:"goals"`
 }
 
 type Session struct {
 	SessionID string `bson:"sID" json:"sID"`
-	Target    string `bson:"sTarget" json:"sTarget"`
+	Target    string `bson:"target" json:"target"`
+}
+
+type CalendarEvent struct {
+	Name     string `bson:"name" json:"title"`
+	Time     uint64 `bson:"time" json:"time"`
+	Timezone string `bson:"timezone,omitempty" json:"timezone,omitempty"`
 }
 
 type Goal struct {
@@ -39,8 +42,9 @@ type Goal struct {
 }
 
 type ProgressEntry struct {
-	Date     string  `bson:"date" json:"date"`
-	Weight   float64 `bson:"weight" json:"weight"`
-	Message  string  `bson:"message" json:"message"`
-	PhotoURL string  `bson:"photo" json:"photo"`
+	ID      primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Date    string             `bson:"date" json:"date"`
+	Weight  float64            `bson:"weight" json:"weight"`
+	Message string             `bson:"message" json:"message"`
+	Photo   string             `bson:"photo,omitempty" json:"photo,omitempty"`
 }

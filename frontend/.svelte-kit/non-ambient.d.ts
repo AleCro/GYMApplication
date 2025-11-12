@@ -27,7 +27,7 @@ export {};
 
 declare module "$app/types" {
 	export interface AppTypes {
-		RouteId(): "/" | "/addgoal" | "/addprogress" | "/calendar" | "/deleteevent" | "/exercise" | "/getgoals" | "/getprogress" | "/goals" | "/login" | "/notes" | "/progress" | "/updategoal";
+		RouteId(): "/" | "/addgoal" | "/addprogress" | "/calendar" | "/deleteevent" | "/deleteprogress" | "/exercise" | "/getgoals" | "/getprogress" | "/goals" | "/login" | "/notes" | "/progress";
 		RouteParams(): {
 			
 		};
@@ -37,16 +37,16 @@ declare module "$app/types" {
 			"/addprogress": Record<string, never>;
 			"/calendar": Record<string, never>;
 			"/deleteevent": Record<string, never>;
+			"/deleteprogress": Record<string, never>;
 			"/exercise": Record<string, never>;
 			"/getgoals": Record<string, never>;
 			"/getprogress": Record<string, never>;
 			"/goals": Record<string, never>;
 			"/login": Record<string, never>;
 			"/notes": Record<string, never>;
-			"/progress": Record<string, never>;
-			"/updategoal": Record<string, never>
+			"/progress": Record<string, never>
 		};
-		Pathname(): "/" | "/addgoal" | "/addgoal/" | "/addprogress" | "/addprogress/" | "/calendar" | "/calendar/" | "/deleteevent" | "/deleteevent/" | "/exercise" | "/exercise/" | "/getgoals" | "/getgoals/" | "/getprogress" | "/getprogress/" | "/goals" | "/goals/" | "/login" | "/login/" | "/notes" | "/notes/" | "/progress" | "/progress/" | "/updategoal" | "/updategoal/";
+		Pathname(): "/" | "/addgoal" | "/addgoal/" | "/addprogress" | "/addprogress/" | "/calendar" | "/calendar/" | "/deleteevent" | "/deleteevent/" | "/deleteprogress" | "/deleteprogress/" | "/exercise" | "/exercise/" | "/getgoals" | "/getgoals/" | "/getprogress" | "/getprogress/" | "/goals" | "/goals/" | "/login" | "/login/" | "/notes" | "/notes/" | "/progress" | "/progress/";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/app.css" | "/robots.txt" | string & {};
 	}

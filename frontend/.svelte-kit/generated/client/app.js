@@ -21,12 +21,12 @@ export const server_loads = [0];
 
 export const dictionary = {
 		"/": [~7],
-		"/calendar": [8,[2]],
-		"/exercise": [9,[3]],
-		"/goals": [10,[4]],
-		"/login": [11,[5]],
-		"/notes": [12],
-		"/progress": [13,[6]]
+		"/calendar": [9,[3]],
+		"/exercise": [8,[2]],
+		"/goals": [13,[6]],
+		"/login": [10,[4]],
+		"/notes": [11],
+		"/progress": [12,[5]]
 	};
 
 export const hooks = {

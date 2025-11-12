@@ -1,1 +1,4 @@
-frontend/node_modules.envdevelopment
+frontend/node_modules
+.env
+development
+api/uploads
