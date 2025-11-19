@@ -1,14 +1,14 @@
 # General
-.env
-.env.*
-!.env.example
+./.env
+./.env.*
+!./.env.example
 
 # Frontend
-frontend/node_modules
-frontend/.output
-frontend/.svelte-kit
-frontend/build
-frontend/vite.config.js.timestamp-*
-frontend/vite.config.ts.timestamp-*
-frontend/.DS_Store
-frontend/Thumbs.db
+./frontend/node_modules
+./frontend/.output
+./frontend/.svelte-kit
+./frontend/build
+./frontend/vite.config.js.timestamp-*
+./frontend/vite.config.ts.timestamp-*
+./frontend/.DS_Store
+./frontend/Thumbs.db

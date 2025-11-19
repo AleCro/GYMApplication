@@ -1,0 +1,53 @@
+{
+	"/": [
+		"src/routes/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/app": [
+		"src/routes/app/+layout.server.js",
+		"src/routes/+layout.server.js",
+		"src/routes/app/+layout.server.js",
+		"src/routes/+layout.server.js",
+		"src/routes/app/+server.js"
+	],
+	"/app/calendar": [
+		"src/routes/app/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/app/documentation": [
+		"src/routes/app/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/app/me": [
+		"src/routes/app/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/app/notes": [
+		"src/routes/app/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/app/progress": [
+		"src/routes/app/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/app/user-management": [
+		"src/routes/app/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/app/workouts": [
+		"src/routes/app/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/login": [
+		"src/routes/login/+layout.server.js",
+		"src/routes/+layout.server.js",
+		"src/routes/login/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/logout": [
+		"src/routes/+layout.server.js"
+	],
+	"/privacy": [
+		"src/routes/+layout.server.js"
+	]
+}

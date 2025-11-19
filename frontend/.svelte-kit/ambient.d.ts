@@ -27,15 +27,14 @@
  */
 declare module '$env/static/private' {
 	export const SHELL: string;
+	export const npm_command: string;
 	export const COLORTERM: string;
 	export const TERM_PROGRAM_VERSION: string;
-	export const JOBS: string;
 	export const NODE: string;
 	export const npm_config_local_prefix: string;
 	export const VSCODE_PROXY_URI: string;
 	export const PWD: string;
 	export const LOGNAME: string;
-	export const BUN_WHICH_IGNORE_CWD: string;
 	export const SYSTEMD_EXEC_PID: string;
 	export const _: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
@@ -45,7 +44,7 @@ declare module '$env/static/private' {
 	export const npm_package_version: string;
 	export const GIT_ASKPASS: string;
 	export const INVOCATION_ID: string;
-	export const INIT_CWD: string;
+	export const npm_lifecycle_script: string;
 	export const VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 	export const VSCODE_PYTHON_AUTOACTIVATE_GUARD: string;
 	export const LESSCLOSE: string;
@@ -54,6 +53,7 @@ declare module '$env/static/private' {
 	export const LESSOPEN: string;
 	export const USER: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
+	export const npm_lifecycle_event: string;
 	export const SHLVL: string;
 	export const npm_config_user_agent: string;
 	export const npm_execpath: string;
@@ -68,6 +68,7 @@ declare module '$env/static/private' {
 	export const OLDPWD: string;
 	export const TERM_PROGRAM: string;
 	export const VSCODE_IPC_HOOK_CLI: string;
+	export const NODE_ENV: string;
 }
 
 /**
@@ -98,15 +99,14 @@ declare module '$env/static/public' {
 declare module '$env/dynamic/private' {
 	export const env: {
 		SHELL: string;
+		npm_command: string;
 		COLORTERM: string;
 		TERM_PROGRAM_VERSION: string;
-		JOBS: string;
 		NODE: string;
 		npm_config_local_prefix: string;
 		VSCODE_PROXY_URI: string;
 		PWD: string;
 		LOGNAME: string;
-		BUN_WHICH_IGNORE_CWD: string;
 		SYSTEMD_EXEC_PID: string;
 		_: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
@@ -116,7 +116,7 @@ declare module '$env/dynamic/private' {
 		npm_package_version: string;
 		GIT_ASKPASS: string;
 		INVOCATION_ID: string;
-		INIT_CWD: string;
+		npm_lifecycle_script: string;
 		VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 		VSCODE_PYTHON_AUTOACTIVATE_GUARD: string;
 		LESSCLOSE: string;
@@ -125,6 +125,7 @@ declare module '$env/dynamic/private' {
 		LESSOPEN: string;
 		USER: string;
 		VSCODE_GIT_IPC_HANDLE: string;
+		npm_lifecycle_event: string;
 		SHLVL: string;
 		npm_config_user_agent: string;
 		npm_execpath: string;
@@ -139,6 +140,7 @@ declare module '$env/dynamic/private' {
 		OLDPWD: string;
 		TERM_PROGRAM: string;
 		VSCODE_IPC_HOOK_CLI: string;
+		NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}
