@@ -28,5 +28,6 @@
 		"@sveltejs/adapter-node": "^5.4.0",
 		"@sveltejs/adapter-vercel": "^6.1.1",
 		"jose": "^6.1.0"
-	}
+	},
+	"engines": { "node": "20.x" }
 }
