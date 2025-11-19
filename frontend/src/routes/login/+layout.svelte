@@ -1,1 +1,1 @@
-<slot /> <!-- login page only -->
+<slot />

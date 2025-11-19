@@ -14,19 +14,26 @@ export const nodes = [
 	() => import('./nodes/10'),
 	() => import('./nodes/11'),
 	() => import('./nodes/12'),
-	() => import('./nodes/13')
+	() => import('./nodes/13'),
+	() => import('./nodes/14'),
+	() => import('./nodes/15')
 ];
 
-export const server_loads = [0];
+export const server_loads = [0,2,3];
 
 export const dictionary = {
-		"/": [~7],
-		"/calendar": [9,[3]],
-		"/exercise": [8,[2]],
-		"/goals": [13,[6]],
-		"/login": [10,[4]],
-		"/notes": [11],
-		"/progress": [12,[5]]
+		"/": [4],
+		"/app": [6,[2]],
+		"/app/calendar": [9,[2]],
+		"/app/documentation": [7,[2]],
+		"/app/me": [8,[2]],
+		"/app/notes": [11,[2]],
+		"/app/progress": [12,[2]],
+		"/app/user-management": [10,[2]],
+		"/app/workouts": [13,[2]],
+		"/login": [14,[3]],
+		"/logout": [15],
+		"/privacy": [5]
 	};
 
 export const hooks = {

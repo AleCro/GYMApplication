@@ -1,12 +1,19 @@
-# Frontend Dockerfile
-FROM node:22-bullseye-slim
+FROM oven/bun:canary-alpine AS builder
+
+WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install
+COPY . .
+RUN bun run build
+
+
+FROM oven/bun:canary-alpine
 
 WORKDIR /app
 
-COPY . .
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json .
 
-RUN npm install --include=dev
-
-EXPOSE 5173
-
-CMD ["npm", "run", "dev"]
+EXPOSE 3000
+CMD ["bun", "build/index.js"]

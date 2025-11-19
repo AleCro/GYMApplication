@@ -1,12 +1,15 @@
-# Backend Dockerfile
-FROM golang:1.25.3
-
-RUN go install github.com/air-verse/air@latest
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/main .
 
-RUN go mod tidy
+FROM alpine:latest
 
-EXPOSE 7284
-CMD ["air"]
+WORKDIR /root/
+COPY --from=builder /app/main .
+EXPOSE 8081
+
+CMD ["./main"]

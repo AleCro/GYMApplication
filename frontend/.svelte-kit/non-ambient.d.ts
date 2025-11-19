@@ -27,27 +27,26 @@ export {};
 
 declare module "$app/types" {
 	export interface AppTypes {
-		RouteId(): "/" | "/addgoal" | "/addprogress" | "/calendar" | "/deleteevent" | "/deleteprogress" | "/exercise" | "/getgoals" | "/getprogress" | "/goals" | "/login" | "/notes" | "/progress";
+		RouteId(): "/" | "/app" | "/app/calendar" | "/app/documentation" | "/app/me" | "/app/notes" | "/app/progress" | "/app/user-management" | "/app/workouts" | "/login" | "/logout" | "/privacy";
 		RouteParams(): {
 			
 		};
 		LayoutParams(): {
 			"/": Record<string, never>;
-			"/addgoal": Record<string, never>;
-			"/addprogress": Record<string, never>;
-			"/calendar": Record<string, never>;
-			"/deleteevent": Record<string, never>;
-			"/deleteprogress": Record<string, never>;
-			"/exercise": Record<string, never>;
-			"/getgoals": Record<string, never>;
-			"/getprogress": Record<string, never>;
-			"/goals": Record<string, never>;
+			"/app": Record<string, never>;
+			"/app/calendar": Record<string, never>;
+			"/app/documentation": Record<string, never>;
+			"/app/me": Record<string, never>;
+			"/app/notes": Record<string, never>;
+			"/app/progress": Record<string, never>;
+			"/app/user-management": Record<string, never>;
+			"/app/workouts": Record<string, never>;
 			"/login": Record<string, never>;
-			"/notes": Record<string, never>;
-			"/progress": Record<string, never>
+			"/logout": Record<string, never>;
+			"/privacy": Record<string, never>
 		};
-		Pathname(): "/" | "/addgoal" | "/addgoal/" | "/addprogress" | "/addprogress/" | "/calendar" | "/calendar/" | "/deleteevent" | "/deleteevent/" | "/deleteprogress" | "/deleteprogress/" | "/exercise" | "/exercise/" | "/getgoals" | "/getgoals/" | "/getprogress" | "/getprogress/" | "/goals" | "/goals/" | "/login" | "/login/" | "/notes" | "/notes/" | "/progress" | "/progress/";
+		Pathname(): "/" | "/app" | "/app/" | "/app/calendar" | "/app/calendar/" | "/app/documentation" | "/app/documentation/" | "/app/me" | "/app/me/" | "/app/notes" | "/app/notes/" | "/app/progress" | "/app/progress/" | "/app/user-management" | "/app/user-management/" | "/app/workouts" | "/app/workouts/" | "/login" | "/login/" | "/logout" | "/logout/" | "/privacy" | "/privacy/";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
-		Asset(): "/app.css" | "/robots.txt" | string & {};
+		Asset(): "/robots.txt" | string & {};
 	}
 }

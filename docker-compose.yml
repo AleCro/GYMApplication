@@ -1,22 +1,67 @@
 version: "3.9"
 
 services:
-  mongo:
-    container_name: mongo
+  # --- 1. MongoDB Database Service ---
+  database:
     image: mongo:latest
+    container_name: alegym-mongo
     restart: unless-stopped
-    volumes:
-      - ./development/database:/data/db
     ports:
-      - "27017:27017"
-    networks:
-      - devnet
+      - "${DATABASE_PORT:-27017}:27017"
     environment:
-      - TZ=UTC
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - alegym-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-networks:
-  devnet:
-    driver: bridge
+  # --- 2. Backend Service ---
+  api:
+    container_name: alegym-api
+    restart: unless-stopped
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "9001:8081"
+    networks:
+      - alegym-net
+    env_file:
+      - ./.env
+    environment:
+      DATABASE_URL: "mongodb://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@database:${DATABASE_PORT:-27017}/"
+    depends_on:
+      database:
+        condition: service_healthy
 
+  # --- 3. Frontend Service ---
+  frontend:
+    container_name: alegym-frontend
+    restart: unless-stopped
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "9000:3000"
+    networks:
+      - alegym-net
+    env_file:
+      - ./.env
+    depends_on:
+      - api
+
+# --- Volumes ---
 volumes:
-  node_modules_data:
+  mongo-data:
+
+# --- Networks ---
+networks:
+  alegym-net:
+    driver: bridge

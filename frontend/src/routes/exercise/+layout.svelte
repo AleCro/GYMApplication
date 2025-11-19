@@ -1,1 +1,0 @@
-<slot /> <!-- renders the current route page -->

@@ -1,9 +1,8 @@
-/*
-This variable allows you to interact with the application's Data-Access-Layer (DAL).
-Frequently used and neccesary functions. Refer to handler.go, and methods.go for more details.
-*/
-package Database
+package Db
 
-type MuscleGroup uint8
+import (
+	"github.com/matthewhartstonge/argon2"
+)
 
 var Connection *Database = nil
+var Argon2 argon2.Config = argon2.DefaultConfig()

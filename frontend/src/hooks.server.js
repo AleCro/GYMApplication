@@ -1,21 +1,23 @@
-import { API_URL } from '$lib/config.js';
+import { env } from '$env/dynamic/private';
+import { jwtVerify } from 'jose';
 
-/** @type {import('@sveltejs/kit').Handle} */
-export async function handle({ event, resolve }) {
-    const sessionId = event.cookies.get('session');
-    console.log(sessionId);
+const SECRET = new TextEncoder().encode(env.JWT_SECRET.trim());
 
-    try {
-        let res = await fetch(API_URL + "/session", {
-            method: "POST",
-            body: JSON.stringify({ session: sessionId })
-        });
-        
-        let resp = await res.json();
-        event.locals.user = resp;
-        event.locals.user.session = sessionId;
-    } catch (e) {}
+export const handle = async ({ event, resolve }) => {
+	const token = event.cookies.get("token");
+	
+	if (token) {
+		try {
+			const { payload } = await jwtVerify(token, SECRET);
+			event.locals.user = payload;
+		} catch (err) {
+			event.locals.user = null;
+			console.warn('JWT validation failed:', err.message);
+			event.cookies.delete('session', { path: '/' });
+		}
+	} else {
+		event.locals.user = null;
+	}
 
-
-    return resolve(event);
-}
+	return await resolve(event);
+};

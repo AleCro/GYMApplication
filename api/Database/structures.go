@@ -1,50 +1,82 @@
-/*
-Defines the schema of the DB.
-*/
-package Database
+package Db
 
 import (
-	"context"
+	"Svelgok-API/Environment"
+	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/golang-jwt/jwt/v5"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type Database struct {
-	client *mongo.Client
-	ctx    context.Context
-}
+type GroupType uint8
 
+const (
+	GroupUser  GroupType = 0x00
+	GroupAdmin GroupType = 0xFF
+)
+
+// Defines the schema of a user.
 type User struct {
-	Username string          `bson:"username" json:"username"`
-	Password string          `bson:"password" json:"password,omitempty"`
-	Notes    []string        `bson:"notes" json:"notes"`
-	Calendar []CalendarEvent `bson:"calendar" json:"calendar"`
-	Progress []ProgressEntry `bson:"progress" json:"progress"`
-	Goals    []Goal          `bson:"goals" json:"goals"`
+	ID       *bson.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Username string         `json:"username" bson:"username"`
+	Password string         `json:"password,omitempty" bson:"password,omitempty"`
+	Group    GroupType      `json:"group" bson:"group"`
 }
 
+// A record that holds an ID used to identify the
+// specific session, and field `TargetUser` which
+// the session aims to.
+//
+// `CreatedAt`: For MongoDB index to remove it after
+//
+//	a pre-defined amount of time.
 type Session struct {
-	SessionID string `bson:"sID" json:"sID"`
-	Target    string `bson:"target" json:"target"`
+	ID         *bson.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	TargetUser *bson.ObjectID `json:"targetUser,omitempty" bson:"targetUser,omitempty"`
+	CreatedAt  time.Time      `json:"createdAt,omitempty" bson:"createdAt,omitempty"`
 }
 
-type CalendarEvent struct {
-	Name     string `bson:"name" json:"title"`
-	Time     uint64 `bson:"time" json:"time"`
-	Timezone string `bson:"timezone,omitempty" json:"timezone,omitempty"`
+type UserJWTClaim struct {
+	SessionID string    `json:"sessionID,omitempty"`
+	UserID    string    `json:"userID,omitempty"`
+	Username  string    `json:"username"`
+	Group     GroupType `json:"group"`
+	jwt.RegisteredClaims
 }
 
-type Goal struct {
-	Title     string   `bson:"title" json:"title"`
-	Steps     []string `bson:"steps" json:"steps"`
-	Completed bool     `bson:"completed" json:"completed"`
+func (c *UserJWTClaim) Expired() bool {
+	if Environment.STRICT_SESSION_CONSISTENCY {
+		if time.Now().After(c.IssuedAt.Time.Add(Environment.JWT_TOKEN_LIFESPAN + Environment.STRICT_SESSION_CONSISTENCY_OFFSET)) {
+			return true
+		}
+	}
+
+	return time.Now().After(c.ExpiresAt.Time)
 }
 
-type ProgressEntry struct {
-	ID      primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Date    string             `bson:"date" json:"date"`
-	Weight  float64            `bson:"weight" json:"weight"`
-	Message string             `bson:"message" json:"message"`
-	Photo   string             `bson:"photo,omitempty" json:"photo,omitempty"`
+type Note struct {
+	ID        *bson.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Owner     *bson.ObjectID `json:"owner,omitempty" bson:"owner,omitempty"`
+	Title     string         `json:"title" bson:"title"`
+	Content   string         `json:"content" bson:"content"`
+	CreatedAt time.Time      `json:"createdAt" bson:"createdAt"`
+	UpdatedAt time.Time      `json:"updatedAt" bson:"updatedAt"`
+}
+
+type Event struct {
+	ID          *bson.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Owner       *bson.ObjectID `json:"owner,omitempty" bson:"owner,omitempty"`
+	Title       string         `json:"title" bson:"title"`
+	Description string         `json:"description" bson:"description"`
+	Date        time.Time      `json:"date" bson:"date"` // We can just store the date part or full time
+	CreatedAt   time.Time      `json:"createdAt" bson:"createdAt"`
+}
+
+type Progress struct {
+	ID          *bson.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Owner       *bson.ObjectID `json:"owner,omitempty" bson:"owner,omitempty"`
+	Title       string         `json:"title" bson:"title"`
+	Description string         `json:"description" bson:"description"`
+	ImageData   string         `json:"imageData" bson:"imageData"`
+	CreatedAt   time.Time      `json:"createdAt" bson:"createdAt"`
 }

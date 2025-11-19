@@ -1,190 +1,191 @@
 <script>
-  import { fly } from 'svelte/transition';
+    import { writable } from 'svelte/store';
+    export let data;
 
-  // If you're using SvelteKit, page props land in `data` when provided by a loader.
-  // This component also works if you pass `data` in manually.
-  export let data = {};
+    const mobileOpen = writable(false);
+    const currentYear = new Date().getFullYear();
 
-  // safe helpers (copied / adapted from your app)
-  const MS_THRESHOLD = 1e12;
-  function toMs(ts) {
-    const n = Number(ts);
-    if (Number.isNaN(n)) return null;
-    return n > MS_THRESHOLD ? n : n * 1000;
-  }
-
-  function formatTimeShort(d) {
-    return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-  }
-
-  // user-safe getters
-  const userName = data?.user?.username || 'Athlete';
-  const notesArr = (data?.user?.notes && Array.isArray(data.user.notes)) ? data.user.notes : [];
-  const exercisesArr = (data?.user?.exercises && Array.isArray(data.user.exercises)) ? data.user.exercises : [];
-
-  // parse calendar events if available
-  let events = [];
-  if (data?.user?.calendar && Array.isArray(data.user.calendar)) {
-    events = data.user.calendar
-      .map((e, i) => {
-        const ms = toMs(e.time);
-        if (!ms) return null;
-        return {
-          // keep original fields, plus normalized time + fallback id
-          id: e.id ?? `${ms}-${i}`,
-          name: e.name ?? e.title ?? 'Event',
-          timeMs: ms,
-          date: new Date(ms)
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.timeMs - b.timeMs);
-  }
-
-  const now = new Date();
-  const upcoming = events.filter(ev => ev.date >= now).slice(0, 3);
-
-  // quick stats
-  const notesCount = notesArr.length;
-  const eventsCount = events.length;
-  const exercisesCount = exercisesArr.length;
+    // Helper function for closing mobile nav
+    function closeMobileNav() {
+        mobileOpen.set(false);
+    }
 </script>
 
-<div class="welcome-container">
-  <section class="hero row align-items-center">
-    <div class="col-lg-7">
-      <div in:fly={{ y: -8, duration: 300 }}>
-        <h1 class="display-5 mb-2">Welcome back{userName ? `, ${userName}` : ''} 👋</h1>
-        <p class="lead text-muted mb-3">Ready for today's session? Quick access to your notes, upcoming events, and exercises.</p>
+<svelte:head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AleGYM - Effortless Workout Tracking & Planning</title>
+    <meta name="description" content="AleGYM: Your personal workout tracker built with Go, MongoDB, and Svelte. Plan your routine, track your progress, and crush your fitness goals." />
+    <link rel="icon" href="/favicon.ico" />
+</svelte:head>
 
-        <div class="d-flex gap-2 flex-wrap">
-          <a class="btn btn-primary btn-lg" href="/calendar">View Calendar</a>
-          <a class="btn btn-outline-light btn-lg" href="/notes">Open Notes</a>
-          <a class="btn btn-outline-light btn-lg" href="/exercise">Exercises</a>
-        </div>
-      </div>
-    </div>
-  </section>
+<div class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col">
+    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16"> 
+                <div class="flex items-center gap-6">
+                    <button 
+                        class="p-2 rounded-md hover:bg-gray-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 md:hidden" 
+                        aria-label="Toggle navigation" 
+                        aria-controls="mobile-nav"
+                        aria-expanded={$mobileOpen}
+                        on:click={() => mobileOpen.update(v => !v)}>
+                        {#if $mobileOpen}
+                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        {:else}
+                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16" /></svg>
+                        {/if}
+                    </button>
 
-  <section class="mt-4">
-    <div class="row g-3">
-      <div class="col-lg-8">
-              <div class="card summary-card p-3 h-100" in:fly={{ y: 6, duration: 300 }}>
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <div>
-            <div class="small text-muted">Quick Overview</div>
-            <h5 class="mb-0">Today at a glance</h5>
-          </div>
-        </div>
+                    <a href="/" class="flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg -m-1 p-1">
+                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-bold shadow-md shrink-0 text-lg">A</div>
+                        <div class="hidden sm:block">
+                            <div class="font-bold text-xl">AleGYM</div>
+                            <div class="text-xs text-gray-400">Keep track of your workout</div>
+                        </div>
+                    </a>
+                </div>
 
-        <div class="row g-2 mt-3">
-          <div class="col-4">
-            <div class="stat-box">
-              <div class="stat-value">{notesCount}</div>
-              <div class="stat-label">Notes</div>
+                <div class="flex items-center gap-3">
+                    {#if data?.user != undefined}
+                        <a href="/app" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                            Go to App
+                        </a>
+                    {:else}
+                        <a href="/login" class="hidden sm:block px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                            Log in
+                        </a>
+                        <a href="/login?register" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                            Sign up Free
+                        </a>
+                    {/if}
+                </div>
             </div>
-          </div>
-          <div class="col-4">
-            <div class="stat-box">
-              <div class="stat-value">{eventsCount}</div>
-              <div class="stat-label">Events</div>
+        </div>
+    </header>
+
+    {#if $mobileOpen}
+        <div class="md:hidden fixed inset-0 z-40 bg-black/70 transition-opacity duration-300 ease-in-out" on:click={closeMobileNav}></div>
+        
+        <aside id="mobile-nav" class="md:hidden fixed left-0 top-0 bottom-0 z-50 w-72 p-4 bg-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out translate-x-0">
+            <div class="flex items-center justify-between mb-8">
+                <a href="/" class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-bold">A</div>
+                    <div class="text-lg font-bold">AleGYM</div>
+                </a>
+                <button on:click={closeMobileNav} aria-label="Close navigation" class="p-2 rounded-md hover:bg-gray-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" aria-hidden stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
             </div>
-          </div>
-          <div class="col-4">
-            <div class="stat-box">
-              <div class="stat-value">{exercisesCount}</div>
-              <div class="stat-label">Exercises</div>
+            <nav class="space-y-1 text-base" on:click={closeMobileNav}>
+                <a href="#features" class="block px-3 py-2 rounded-lg hover:bg-gray-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Features</a>
+                <a href="/pricing" class="block px-3 py-2 rounded-lg hover:bg-gray-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Pricing</a>
+                <a href="/docs" class="block px-3 py-2 rounded-lg hover:bg-gray-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Docs</a>
+                <div class="mt-8 border-t border-gray-700 pt-4 space-y-2">
+                    <a href="/login" class="inline-block w-full text-center px-3 py-2 rounded-lg hover:bg-gray-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Log in</a>
+                    <a href="/login?register" class="inline-block w-full text-center px-3 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Sign up Free</a>
+                </div>
+            </nav>
+        </aside>
+    {/if}
+
+    <main class="flex-grow">
+        
+        <section class="py-16 md:py-24 text-center">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-4">
+                    Track Your Workouts. <br class="hidden sm:inline" />
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-400">Smash Your Goals.</span>
+                </h1>
+                
+                <p class="text-xl text-gray-400 mb-10 max-w-3xl mx-auto">
+                    **AleGYM** is the simple, powerful app to log your exercises, plan routines, and visualize your progress—built for consistency.
+                </p>
+
+                <div class="flex flex-col sm:flex-row justify-center gap-4 mb-16">
+                    <a 
+                        href="/login?register" 
+                        class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-lg font-bold rounded-xl shadow-xl text-white bg-indigo-600 hover:bg-indigo-700 transition duration-150 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-gray-900 transform hover:scale-[1.02]"
+                    >
+                        Start Tracking (It's Free!)
+                    </a>
+                    <a 
+                        href="#features" 
+                        class="inline-flex items-center justify-center px-8 py-3 text-lg font-medium rounded-xl text-indigo-400 bg-gray-800 hover:bg-gray-700 transition duration-150 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-gray-900"
+                    >
+                        Learn More
+                    </a>
+                </div>
+
+                <div class="relative w-full overflow-hidden rounded-xl shadow-2xl border border-gray-800">
+                    <div class="absolute top-0 left-0 right-0 h-8 bg-gray-800 flex items-center px-4 space-x-2 border-b border-gray-700">
+                        <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                        <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                        <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                    </div>
+                    <div class="pt-8 bg-gray-800/50 min-h-[400px] flex items-center justify-center p-4">
+                        <img src="/app.png" alt="AleGYM application dashboard screenshot" class="w-full h-auto object-cover rounded-b-xl" />
+                    </div>
+                </div>
             </div>
-          </div>
+        </section>
+
+        <hr class="border-gray-800 max-w-7xl mx-auto"/>
+
+        <section id="features" class="py-16 md:py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-4xl font-extrabold text-center mb-4">Focus on What Matters</h2>
+                <p class="text-xl text-gray-400 text-center mb-16 max-w-3xl mx-auto">
+                    AleGYM gives you the tools to stay accountable and see tangible results from your efforts.
+                </p>
+
+                <div class="grid md:grid-cols-3 gap-10">
+                    <div class="p-6 bg-gray-800 rounded-xl shadow-xl border border-gray-700">
+                        <svg class="w-10 h-10 text-indigo-400 mb-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <h3 class="text-2xl font-bold mb-3">Effortless Logging</h3>
+                        <p class="text-gray-400">Quickly record sets, reps, and weights. Add notes to track your RPE or feeling for each exercise.</p>
+                    </div>
+                    <div class="p-6 bg-gray-800 rounded-xl shadow-xl border border-gray-700">
+                        <svg class="w-10 h-10 text-pink-400 mb-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 9h.01M9 16h.01M13 16h.01M17 16h.01M7 21h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <h3 class="text-2xl font-bold mb-3">Plan Your Week</h3>
+                        <p class="text-gray-400">Schedule your workouts in advance and get reminders so you never miss a session.</p>
+                    </div>
+                    <div class="p-6 bg-gray-800 rounded-xl shadow-xl border border-gray-700">
+                        <svg class="w-10 h-10 text-teal-400 mb-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <h3 class="text-2xl font-bold mb-3">Visualize Progress</h3>
+                        <p class="text-gray-400">See charts and statistics on volume, intensity, and personal bests to stay motivated.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <hr class="border-gray-800 max-w-7xl mx-auto"/>
+
+        <section class="py-16 text-center">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-2xl font-bold mb-4 text-gray-400">Built with a Modern Stack</h2>
+                <p class="text-lg text-gray-500">
+                    AleGYM is built on top of <a href="https://github.com/yxl-prz/YSvelGoK">YSvelGoK</a>. Powered by <strong>Go</strong> for fast, reliable backend performance, <strong>MongoDB</strong> for flexible data storage, and a modern frontend using <strong>SvelteKit</strong> and <strong>Tailwind CSS</strong>.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-sm text-gray-400 mt-auto">
+        <div class="flex flex-col sm:flex-row items-center justify-between border-t border-gray-700 pt-4">
+            <div>© {currentYear} AleGYM. All rights reserved. - </div>
+            <div class="flex items-center gap-4 mt-3 sm:mt-0">
+                <a href="/privacy" class="hover:text-gray-100 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-sm">Privacy Policy</a>
+            </div>
         </div>
-
-        <hr class="my-3" />
-
-        <div>
-          <div class="small text-muted mb-2">Upcoming</div>
-
-          {#if upcoming.length === 0}
-            <div class="text-muted small">No upcoming events.</div>
-          {:else}
-            <ul class="list-unstyled mb-0">
-              {#each upcoming as ev (ev.id)}
-                <li class="upcoming-item">
-                  <div class="fw-semibold">{ev.name}</div>
-                  <div class="small text-muted">{formatTimeShort(ev.date)}</div>
-                </li>
-              {/each}
-            </ul>
-          {/if}
-        </div>
-      </div>
-      </div>
-
-      <div class="col-lg-4">
-        <div class="card panels p-3">
-          <h6 class="mb-3">Quick Actions</h6>
-          <div class="d-grid gap-2">
-            <a class="btn btn-outline-light" href="/notes">New Note</a>
-            <a class="btn btn-outline-light" href="/calendar">Add Event</a>
-            <a class="btn btn-outline-light" href="/exercise">Start Workout</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+    </footer>
 </div>
 
 <style>
-  .welcome-container { color: #e6eef6; }
-
-  .hero { gap: 24px; }
-  h1.display-5 { font-weight: 700; color: #fff; letter-spacing: -0.4px; }
-  p.lead { color: rgba(230,238,246,0.75); }
-
-  .summary-card {
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border: 1px solid rgba(255,255,255,0.04);
-    box-shadow: 0 6px 28px rgba(2,6,23,0.6);
-    min-height: 210px;
-  }
-
-  .stat-box {
-    background: rgba(255,255,255,0.02);
-    border-radius: .5rem;
-    padding: 10px;
-    text-align: center;
-  }
-  .stat-value {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #9be7ff;
-  }
-  .stat-label { font-size: 0.8rem; color: rgba(230,238,246,0.7); }
-
-  .upcoming-item {
-    padding: 8px 0;
-    border-bottom: 1px dashed rgba(255,255,255,0.03);
-  }
-  .upcoming-item:last-child { border-bottom: none; }
-
-  .panels {
-    background: linear-gradient(180deg, rgba(20,24,30,0.9), rgba(12,14,18,0.85));
-    border: 1px solid rgba(255,255,255,0.03);
-  }
-
-  .note-summary {
-    padding: 10px 0;
-    border-bottom: 1px dashed rgba(255,255,255,0.03);
-  }
-  .note-summary:last-child { border-bottom: none; }
-
-  .link-light { color: #9be7ff; text-decoration: none; }
-  .link-light:hover { text-decoration: underline; color: #bff1ff; }
-
-  a.btn-primary { background: linear-gradient(90deg,#0d6efd,#7c3ef3); border: none; }
-  a.btn-outline-light { border-color: rgba(255,255,255,0.06); color: rgba(230,238,246,0.95); }
-
-  @media (max-width: 767px) {
-    .stat-value { font-size: 1rem; }
-    .summary-card { min-height: auto; }
-  }
+    header { 
+        /* Ensure the backdrop filter works correctly */
+        backdrop-filter: blur(10px); 
+        -webkit-backdrop-filter: blur(10px); 
+    }
 </style>

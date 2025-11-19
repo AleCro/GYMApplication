@@ -30,18 +30,22 @@ declare module '$env/static/private' {
 	export const npm_command: string;
 	export const COLORTERM: string;
 	export const TERM_PROGRAM_VERSION: string;
+	export const DATABASE_URL: string;
 	export const NODE: string;
+	export const DB_USERS_COLLECTION: string;
 	export const npm_config_local_prefix: string;
 	export const VSCODE_PROXY_URI: string;
 	export const PWD: string;
 	export const LOGNAME: string;
+	export const JWT_TOKEN_LIFESPAN: string;
+	export const DB_SESSIONS_COLLECTION: string;
 	export const SYSTEMD_EXEC_PID: string;
-	export const _: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
 	export const HOME: string;
 	export const LANG: string;
 	export const LS_COLORS: string;
 	export const npm_package_version: string;
+	export const DATABASE_PORT: string;
 	export const GIT_ASKPASS: string;
 	export const INVOCATION_ID: string;
 	export const npm_lifecycle_script: string;
@@ -53,21 +57,29 @@ declare module '$env/static/private' {
 	export const LESSOPEN: string;
 	export const USER: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
+	export const DATABASE_PASSWORD: string;
+	export const JWT_RENEWAL_GRACE_PERIOD: string;
+	export const DATABASE_USERNAME: string;
 	export const npm_lifecycle_event: string;
 	export const SHLVL: string;
 	export const npm_config_user_agent: string;
 	export const npm_execpath: string;
+	export const DB_NAME: string;
 	export const npm_package_json: string;
 	export const BUN_INSTALL: string;
 	export const VSCODE_GIT_ASKPASS_MAIN: string;
 	export const JOURNAL_STREAM: string;
 	export const BROWSER: string;
 	export const PATH: string;
+	export const DB_SESSIONS_TLL_INDEX_NAME: string;
+	export const SESSION_DURATION: string;
 	export const NODE_EXEC_PATH: string;
+	export const JWT_SECRET: string;
 	export const npm_node_execpath: string;
 	export const OLDPWD: string;
 	export const TERM_PROGRAM: string;
 	export const VSCODE_IPC_HOOK_CLI: string;
+	export const _: string;
 	export const NODE_ENV: string;
 }
 
@@ -81,7 +93,7 @@ declare module '$env/static/private' {
  * ```
  */
 declare module '$env/static/public' {
-	
+	export const PUBLIC_API_URL: string;
 }
 
 /**
@@ -102,18 +114,22 @@ declare module '$env/dynamic/private' {
 		npm_command: string;
 		COLORTERM: string;
 		TERM_PROGRAM_VERSION: string;
+		DATABASE_URL: string;
 		NODE: string;
+		DB_USERS_COLLECTION: string;
 		npm_config_local_prefix: string;
 		VSCODE_PROXY_URI: string;
 		PWD: string;
 		LOGNAME: string;
+		JWT_TOKEN_LIFESPAN: string;
+		DB_SESSIONS_COLLECTION: string;
 		SYSTEMD_EXEC_PID: string;
-		_: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
 		HOME: string;
 		LANG: string;
 		LS_COLORS: string;
 		npm_package_version: string;
+		DATABASE_PORT: string;
 		GIT_ASKPASS: string;
 		INVOCATION_ID: string;
 		npm_lifecycle_script: string;
@@ -125,21 +141,29 @@ declare module '$env/dynamic/private' {
 		LESSOPEN: string;
 		USER: string;
 		VSCODE_GIT_IPC_HANDLE: string;
+		DATABASE_PASSWORD: string;
+		JWT_RENEWAL_GRACE_PERIOD: string;
+		DATABASE_USERNAME: string;
 		npm_lifecycle_event: string;
 		SHLVL: string;
 		npm_config_user_agent: string;
 		npm_execpath: string;
+		DB_NAME: string;
 		npm_package_json: string;
 		BUN_INSTALL: string;
 		VSCODE_GIT_ASKPASS_MAIN: string;
 		JOURNAL_STREAM: string;
 		BROWSER: string;
 		PATH: string;
+		DB_SESSIONS_TLL_INDEX_NAME: string;
+		SESSION_DURATION: string;
 		NODE_EXEC_PATH: string;
+		JWT_SECRET: string;
 		npm_node_execpath: string;
 		OLDPWD: string;
 		TERM_PROGRAM: string;
 		VSCODE_IPC_HOOK_CLI: string;
+		_: string;
 		NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
@@ -158,6 +182,7 @@ declare module '$env/dynamic/private' {
  */
 declare module '$env/dynamic/public' {
 	export const env: {
+		PUBLIC_API_URL: string;
 		[key: `PUBLIC_${string}`]: string | undefined;
 	}
 }

@@ -1,11 +1,13 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-	plugins: [sveltekit()],
-	server: {
-    	host: '0.0.0.0',
-    	port: 5173,
-    	allowedHosts: ['gym.alecro.click'],
-  },
+  plugins: [
+    tailwindcss(),
+    sveltekit(),
+  ],
+  server: {
+    allowedHosts: ['gym.alecro.click']
+  }
 });
