@@ -104,7 +104,7 @@
 </script>
 
 <svelte:head>
-    <title>{mode == "login" ? "Log In" : "Register"} - YSvelGoK</title>
+    <title>{mode == "login" ? "Log In" : "Register"} - AleGYM</title>
 </svelte:head>
 
 <div
@@ -144,20 +144,16 @@
                     <div
                         class="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--primary-indigo)] to-[var(--primary-pink)] flex items-center justify-center text-white font-bold shadow-lg shrink-0"
                     >
-                        YSG
+                        AG
                     </div>
-                    <h1 class="text-3xl font-extrabold">YSvelGoK</h1>
+                    <h1 class="text-3xl font-extrabold">AleGYM</h1>
                 </div>
 
                 <h2 class="text-4xl font-bold leading-tight mb-4">
-                    The <span class="gradient-text">full-stack</span> foundation
-                    for your next project.
+                    The <span class="gradient-text">GYM App</span> for your next workout
                 </h2>
                 <p class="text-gray-400 text-lg">
-                    Focus on features, not boilerplate. Allowing you to build a
-                    robust application using <strong>Svelte</strong>,
-                    <strong>Go</strong>
-                    and <strong>MongoDB</strong> within minutes.
+                    Be ready to track your progress towards a healthier lifestyle in minutes.
                 </p>
             </div>
 
@@ -201,7 +197,7 @@
             </div>
 
             <p class="text-xs text-gray-500 mt-6">
-                © {new Date().getFullYear()} YSvelGoK. All rights reserved.
+                © {new Date().getFullYear()} AleGYM. All rights reserved.
             </p>
         </div>
 
@@ -212,7 +208,7 @@
                         <div
                             class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--primary-indigo)] to-[var(--primary-pink)] flex items-center justify-center text-white font-bold shadow-md shrink-0"
                         >
-                            YSG
+                            AG
                         </div>
                         <h1 class="text-2xl font-bold">Authorization</h1>
                     </div>
