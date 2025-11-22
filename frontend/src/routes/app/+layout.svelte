@@ -24,8 +24,13 @@
             clearInterval(sessionRefreshInterval);
         }
         sessionRefreshInterval = setInterval(() => {
-            let expiresInMS = user.exp * 1000 - new Date().valueOf();
-            if (expiresInMS < 1000 * 60 * 5) {
+            if (!user) return; // Prevent errors if user is null during interval check
+            
+            // Note: Data.user is expected to have 'exp' field which is a UNIX timestamp (seconds)
+            const currentTimeInSeconds = new Date().valueOf() / 1000;
+            let expiresInSeconds = user.exp - currentTimeInSeconds;
+
+            if (expiresInSeconds < 60 * 5) { // If less than 5 minutes left
                 refreshSession(cookies.token)
                     .then((res) => {
                         cookies.token = res;
@@ -46,7 +51,7 @@
                         console.error("Unable to renew session", err);
                     });
             }
-        }, 1000*60);
+        }, 1000 * 60); // Check every minute
     });
 
     onDestroy(() => {
@@ -57,10 +62,14 @@
 
     let mainNav = [
         { href: "/app", label: "Dashboard", icon: "🏠" },
+        { href: "/app/timer", label: "Timer", icon: "⏱️" },
         { href: "/app/notes", label: "Notes", icon: "📝" },
         { href: "/app/calendar", label: "Calendar", icon: "📅" },
         { href: "/app/workouts", label: "Workouts", icon: "💪" },
         { href: "/app/progress", label: "Progress", icon: "📈" },
+        { href: "/app/goals", label: "Goals", icon: "🎯" },
+        { href: "/about", label: "About", icon: "❔" },
+        // Removed duplicate Goals entry here
         {
             href: "/app/user-management",
             label: "User Management",
@@ -135,7 +144,7 @@
                                 >
                             {/if}
                         </button>
-    
+            
                         <a
                             href="/app"
                             class="flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg -m-1 p-1"
@@ -150,7 +159,7 @@
                             </div>
                         </a>
                     </div>
-    
+            
                     <div class="flex items-center gap-4">
                         <div
                             class="hidden md:flex items-center glass-input rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary transition"
@@ -174,7 +183,7 @@
                                 class="bg-transparent outline-none text-sm placeholder-gray-400 w-40 text-text"
                             />
                         </div>
-    
+            
                         <a
                             href="/app/me"
                             class="flex items-center gap-2 p-1.5 rounded-full hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -185,11 +194,11 @@
                                 {userInitial}
                             </div>
                             <span
-                                class="hidden lg:block text-sm font-medium text-text mr-1" title="Session expires: {user.exp - new Date().valueOf()/1000}m"
+                                class="hidden lg:block text-sm font-medium text-text mr-1" title="Session expires: {user?.exp - (new Date().valueOf()/1000) ?? 'N/A'}s"
                                 >{data?.user?.username ?? "Guest"}</span
                             >
                         </a>
-    
+            
                         <button
                             on:click={signOut}
                             class="hidden sm:block px-3 py-2 rounded-lg bg-accent/20 text-accent text-sm font-medium hover:bg-accent/30 transition shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -385,3 +394,19 @@
             </div>
         </footer>
     </div>
+<style>
+    /* Custom glass styling for the fixed background look. 
+     This assumes custom Tailwind configuration or utility styles 
+     for 'glass', 'primary', 'secondary', 'accent', 'background', 'text', and 'glass-input'
+    */
+    .glass {
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .glass-input {
+        background-color: rgba(0, 0, 0, 0.2);
+    }
+    /* Assuming primary, secondary, and accent colors are defined via Tailwind config */
+</style>

@@ -10,6 +10,7 @@
 
     let mode = "login";
     let username = "";
+    let email = "";
     let password = "";
     let passwordC = "";
     $: passwordCheck = isPasswordSecure(password);
@@ -37,12 +38,15 @@
         messageType = "";
     }
 
+    function goBack() {
+        goto("/");
+    }
+
     async function handleSubmit(event) {
         event.preventDefault();
 
-        // simple client-side validation (already using required on inputs)
-        if (!username || !password || (mode === "register" && !username)) {
-            showMessage("Please fill out the required fields.", "error");
+        if (!username || !password || (mode === "register" && !email)) {
+            showMessage("Please fill out all required fields.", "error");
             return;
         }
 
@@ -57,10 +61,18 @@
                     showMessage(err, "error");
                 });
         } else {
-            if (!passwordsMatch) return;
-            if (!passwordCheck.secure) return;
-            createUser(username, password).then((session) => {
-                    showMessage(`Successful login, redirecting...`, "success");
+            if (!passwordsMatch) {
+                showMessage("Passwords do not match.", "error");
+                return;
+            }
+            if (!passwordCheck.secure) {
+                showMessage("Please strengthen your password.", "error");
+                return;
+            }
+
+            createUser(username, password, email)
+                .then((session) => {
+                    showMessage(`Successful registration, redirecting...`, "success");
                     cookies.setCookie("token", session);
                     goto("/app");
                 })
@@ -74,6 +86,7 @@
         mode = mode === "login" ? "register" : "login";
         hideMessage();
     }
+
     onMount(() => {
         let urlParams = new URLSearchParams(window.location.search);
 
@@ -95,8 +108,31 @@
 </svelte:head>
 
 <div
-    class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center p-4 lg:p-8"
+    class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center p-4 lg:p-8 relative"
 >
+    <!-- Back button (top-left) -->
+    <button
+        type="button"
+        class="back-btn absolute left-4 top-4 flex items-center gap-2 text-sm text-gray-300 hover:text-white"
+        on:click={goBack}
+        aria-label="Go back"
+    >
+        <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+            />
+        </svg>
+        <span>Back</span>
+    </button>
+
     <div
         class="w-full max-w-6xl mx-auto h-auto bg-gray-800/70 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-5 border border-gray-700/50"
     >
@@ -193,7 +229,7 @@
                 >
                     <div>
                         <label
-                            for="email"
+                            for="username"
                             class="block text-sm font-medium text-gray-300 mb-1"
                             >Username</label
                         >
@@ -207,6 +243,26 @@
                             placeholder="e.g: Cool Guy"
                         />
                     </div>
+
+                    {#if mode === "register"}
+                        <div>
+                            <label
+                                for="email"
+                                class="block text-sm font-medium text-gray-300 mb-1"
+                            >
+                                Email
+                            </label>
+                            <input
+                                id="email"
+                                type="email"
+                                name="email"
+                                bind:value={email}
+                                required
+                                class="form-input w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 transition duration-150 ease-in-out focus:border-[var(--primary-indigo)]"
+                                placeholder="you@example.com"
+                            />
+                        </div>
+                    {/if}
 
                     <div>
                         <label
@@ -224,6 +280,7 @@
                             placeholder="••••••••"
                         />
                     </div>
+
                     {#if password.length > 0 && mode == "register" && !passwordCheck.secure}
                         <div
                             class="p-4 bg-gray-900 border border-gray-700 rounded-md"
@@ -249,6 +306,7 @@
                             </ul>
                         </div>
                     {/if}
+
                     {#if mode === "register"}
                         <div>
                             <label
@@ -298,7 +356,7 @@
                     >
                     <button
                         type="button"
-                        class="font-medium gradient-text hover:text-indigo-400 transition duration-150 ml-1"
+                        class="font-medium gradient-text gradient-clickable cursor-pointer transition duration-150 ml-1"
                         on:click={toggleMode}
                     >
                         {mode === "login" ? "Sign up" : "Log in"}
@@ -343,7 +401,6 @@
         -moz-osx-font-smoothing: grayscale;
     }
 
-    /* gradient text */
     .gradient-text {
         background-image: linear-gradient(
             90deg,
@@ -356,18 +413,57 @@
         color: transparent;
     }
 
-    /* focus styles for input/button to match the original */
+    /* clickable gradient underline on hover */
+    .gradient-clickable {
+        position: relative;
+    }
+
+    .gradient-clickable::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -0.1rem;
+        width: 100%;
+        height: 2px;
+        background-image: linear-gradient(
+            90deg,
+            var(--primary-indigo),
+            var(--primary-pink)
+        );
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.2s ease-out;
+    }
+
+    .gradient-clickable:hover::after,
+    .gradient-clickable:focus-visible::after {
+        transform: scaleX(1);
+    }
+
     .form-input:focus,
     .form-button:focus {
         outline: none;
-        /* subtle indigo ring */
         box-shadow:
             0 0 0 2px transparent,
             0 0 0 4px rgba(99, 102, 241, 0.18);
     }
 
-    /* small helper for the message box transitions */
     .message-enter-leave {
         transition: all 0.25s ease;
+    }
+
+    .back-btn {
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+        background-color: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        backdrop-filter: blur(6px);
+        transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .back-btn:hover {
+        background-color: rgba(15, 23, 42, 1);
+        border-color: rgba(191, 219, 254, 0.7);
+        transform: translateY(-1px);
     }
 </style>

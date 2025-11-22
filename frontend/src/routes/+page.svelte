@@ -98,8 +98,18 @@
                     <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-400">Smash Your Goals.</span>
                 </h1>
                 
-                <p class="text-xl text-gray-400 mb-10 max-w-3xl mx-auto">
-                    **AleGYM** is the simple, powerful app to log your exercises, plan routines, and visualize your progress—built for consistency.
+                <p class="text-xl text-gray-400 mb-6 max-w-3xl mx-auto">
+                    <strong>AleGYM</strong> is a simple, powerful app to log your exercises, plan routines, and visualize your progress—built for long-term consistency.
+                </p>
+
+                <p class="text-lg text-gray-400 mb-10 max-w-4xl mx-auto leading-relaxed">
+                    GYMApp is a fitness companion that unifies everyday training tasks into a clean, intuitive experience. 
+                    A Svelte front end paired with a Go REST API and MongoDB supports a dashboard where users jot quick notes 
+                    during workouts, schedule routines on an interactive calendar, and log progress with weight, messages, and 
+                    optional photos stored in Base64. An exercise explorer offers examples and guidance to help users verify form 
+                    and discover new workouts. The Goal and Progress features allow you to stay organized and on track throughout 
+                    your Gym Journey. By combining planning, reflection, and guidance in one place, GYMApp can help you focus better 
+                    on your Gym Journey and Fitness Goals.
                 </p>
 
                 <div class="flex flex-col sm:flex-row justify-center gap-4 mb-16">
@@ -165,7 +175,9 @@
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <h2 class="text-2xl font-bold mb-4 text-gray-400">Built with a Modern Stack</h2>
                 <p class="text-lg text-gray-500">
-                    AleGYM is built on top of <a href="https://github.com/yxl-prz/YSvelGoK">YSvelGoK</a>. Powered by <strong>Go</strong> for fast, reliable backend performance, <strong>MongoDB</strong> for flexible data storage, and a modern frontend using <strong>SvelteKit</strong> and <strong>Tailwind CSS</strong>.
+                    AleGYM is built on top of <a href="https://github.com/yxl-prz/YSvelGoK" class="underline hover:text-gray-300">YSvelGoK</a>. 
+                    Powered by <strong>Go</strong> for fast, reliable backend performance, <strong>MongoDB</strong> for flexible data storage, 
+                    and a modern frontend using <strong>SvelteKit</strong> and <strong>Tailwind CSS</strong>.
                 </p>
             </div>
         </section>

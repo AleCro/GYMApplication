@@ -1,8 +1,8 @@
 import { request } from "$lib/api/util";
 
-export let create = (username="", password="") => {
+export let create = (username="", password="", email="") => {
     return new Promise((resolve, reject) => {
-        request("/users", "POST", JSON.stringify({username, password}), null).then(res => {
+        request("/users", "POST", JSON.stringify({username, password, email}), null).then(res => {
             if (res?.session) {
                 resolve(res?.session)
             } else if (res?.message) {

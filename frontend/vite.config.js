@@ -9,6 +9,6 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
-    allowedHosts: ['gym.alecro.click']
+    allowedHosts: ['gym.alecro.click', 't-gym.alecro.click']
   }
 });

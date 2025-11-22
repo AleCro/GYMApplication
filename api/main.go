@@ -89,6 +89,14 @@ func main() {
 	r.OPTIONS("/progress", Routes.OPTIONS)
 	r.OPTIONS("/progress/:id", Routes.OPTIONS)
 
+	// Goals
+	r.GET("/goals", Routes.RequireSessionValidate(), Routes.GetGoals)
+	r.POST("/goals", Routes.RequireSessionValidate(), Routes.CreateGoal)
+	r.PUT("/goals/:id", Routes.RequireSessionValidate(), Routes.UpdateGoal)
+	r.DELETE("/goals/:id", Routes.RequireSessionValidate(), Routes.DeleteGoal)
+	r.OPTIONS("/goals", Routes.OPTIONS)
+	r.OPTIONS("/goals/:id", Routes.OPTIONS)
+
 	// Static files
 	r.Static("/static", "./static")
 

@@ -79,7 +79,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	if form.Username == "" || form.Password == "" {
+	if form.Username == "" || form.Password == "" || form.Email == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid body received"})
 		return
 	}
@@ -101,6 +101,7 @@ func CreateUser(c *gin.Context) {
 	}
 
 	user, err := Db.Connection.InsertOneUser(&Db.User{
+		Email:    form.Email,
 		Username: form.Username,
 		Password: string(pwd),
 		Group:    Db.GroupUser,

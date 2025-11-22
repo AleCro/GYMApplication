@@ -103,7 +103,7 @@ func (db *Database) Initialize() error {
 	}
 
 	// Initialize new collections
-	collections := []string{"notes", "events", "progress"}
+	collections := []string{"notes", "events", "progress", "goals"}
 	for _, name := range collections {
 		found := false
 		for _, n := range existing {
@@ -855,6 +855,82 @@ func (db *Database) DeleteProgress(id string, ownerID *bson.ObjectID) error {
 	}
 	if res.DeletedCount == 0 {
 		return fmt.Errorf("progress not found or unauthorized")
+	}
+	return nil
+}
+// Goals CRUD
+
+// CreateGoal inserts a new goal into the database.
+// It sets the CreatedAt and UpdatedAt timestamps to the current time.
+func (db *Database) CreateGoal(goal *Goal) (*Goal, error) {
+	collection := db.client.Database(Environment.DB_NAME).Collection("goals")
+	goal.CreatedAt = time.Now()
+	goal.UpdatedAt = time.Now()
+	res, err := collection.InsertOne(db.ctx, goal)
+	if err != nil {
+		return nil, err
+	}
+	id := res.InsertedID.(bson.ObjectID)
+	goal.ID = &id
+	return goal, nil
+}
+
+// GetGoals retrieves all goals for a specific owner.
+// Results are sorted by UpdatedAt in descending order (newest first).
+func (db *Database) GetGoals(ownerID *bson.ObjectID) ([]*Goal, error) {
+	collection := db.client.Database(Environment.DB_NAME).Collection("goals")
+	filter := bson.D{{"owner", ownerID}}
+	cursor, err := collection.Find(db.ctx, filter, options.Find().SetSort(bson.D{{"updatedAt", -1}}))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(db.ctx)
+	var goals []*Goal
+	if err := cursor.All(db.ctx, &goals); err != nil {
+		return nil, err
+	}
+	return goals, nil
+}
+
+// UpdateGoal modifies the title, description, and subgoals of an existing goal.
+// It also updates the UpdatedAt timestamp.
+func (db *Database) UpdateGoal(id string, ownerID *bson.ObjectID, title, description string, subGoals []SubGoal) error {
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	collection := db.client.Database(Environment.DB_NAME).Collection("goals")
+	filter := bson.D{{"_id", objID}, {"owner", ownerID}}
+	update := bson.D{{"$set", bson.D{
+		{"title", title},
+		{"description", description},
+		{"subGoals", subGoals},
+		{"updatedAt", time.Now()},
+	}}}
+	res, err := collection.UpdateOne(db.ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	if res.MatchedCount == 0 {
+		return fmt.Errorf("goal not found or unauthorized")
+	}
+	return nil
+}
+
+// DeleteGoal removes a goal from the database.
+func (db *Database) DeleteGoal(id string, ownerID *bson.ObjectID) error {
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	collection := db.client.Database(Environment.DB_NAME).Collection("goals")
+	filter := bson.D{{"_id", objID}, {"owner", ownerID}}
+	res, err := collection.DeleteOne(db.ctx, filter)
+	if err != nil {
+		return err
+	}
+	if res.DeletedCount == 0 {
+		return fmt.Errorf("goal not found or unauthorized")
 	}
 	return nil
 }

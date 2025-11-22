@@ -18,6 +18,7 @@ const (
 // Defines the schema of a user.
 type User struct {
 	ID       *bson.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Email    string         `json:"email" bson:"email"`
 	Username string         `json:"username" bson:"username"`
 	Password string         `json:"password,omitempty" bson:"password,omitempty"`
 	Group    GroupType      `json:"group" bson:"group"`
@@ -79,4 +80,20 @@ type Progress struct {
 	Description string         `json:"description" bson:"description"`
 	ImageData   string         `json:"imageData" bson:"imageData"`
 	CreatedAt   time.Time      `json:"createdAt" bson:"createdAt"`
+}
+
+type SubGoal struct {
+	ID        string `json:"id" bson:"id"` // Client-side generated ID or UUID
+	Title     string `json:"title" bson:"title"`
+	Completed bool   `json:"completed" bson:"completed"`
+}
+
+type Goal struct {
+	ID          *bson.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Owner       *bson.ObjectID `json:"owner,omitempty" bson:"owner,omitempty"`
+	Title       string         `json:"title" bson:"title"`
+	Description string         `json:"description" bson:"description"`
+	SubGoals    []SubGoal      `json:"subGoals" bson:"subGoals"`
+	CreatedAt   time.Time      `json:"createdAt" bson:"createdAt"`
+	UpdatedAt   time.Time      `json:"updatedAt" bson:"updatedAt"`
 }
