@@ -1,29 +1,63 @@
-# GYMApp
-Goal: The goal of this application is to help users get started and track their activity in the GYM
+# AleGYM - GYM Activity Tracker
 
-In one of my previous classes, I had an idea for a Gym App that was mainly to help you keep track of rep count. The app also consisted of other stuff like also help you keep track of your working plan, if you have any question about a certain exercise it would provided examples, videos explaining the exercise, but mostly i wanted to make a Gym Note App, to not only help you keep track of your exercise journey but also help you stay guided and now that I think about it also focus. I would like to try bringing this idea back from the dead, even though I might be very generic. Some of my inspiration for this app comes from MuscleWiki and the gym app provided by my gym, YouFit. I think I'm going to stick with a generic gym app UI like the one shown below.
-* Generic and Simple UI, composed of a search bar that allows the user to search for the tab that best fits their need.
-* Note Tab: This will allow you to take notes from either the workout you're currently working on or ideas that come up while working out.
-* Training Tab, I am borrowing this idea from Muscle Wiki. They have a training tab that shows workout routines.
-* WorkoutTab: This tab will allow you to search for specific exercises by name, allowing the user to see if they're doing the exercise correctly.
-* Journey Tab, I am borrowing some ideas from my gym app. They have a section called my progress which allows me to keep track of my weight, photos, caloric intake, body fat, sleep, caloric burn, learn body mass, and other things, but I think these are the ones I want to implement.
-* Focus Tab: This tab will allow you to block out other apps of your choosing so that you can stay focused and not get distracted.
-* Calendar Tab, I would like to add a calendar somewhere; maybe I'll merge this with either the Journey Tab or the Note Tab.
+AleGYM is a comprehensive web application designed to help users track their gym activities, set and monitor goals, and maintain a consistent workout routine. It combines a robust backend service with a modern, responsive frontend to provide a seamless user experience for fitness enthusiasts.
 
-## Running
-### Frontend
-1. Access the `api` folder, and run the following command
+## Project Overview
+
+The goal of this application is to assist users in getting started and staying on track with their gym journey. It goes beyond simple rep counting to include features for:
+- **Goal Tracking:** Define main goals and break them down into manageable sub-goals.
+- **Progress Monitoring:** Track weight, body metrics, and other progress indicators.
+- **Notes & Journaling:** Keep track of workout thoughts, ideas, and plans.
+- **Event Scheduling:** Plan workouts and gym sessions.
+
+## Architecture
+
+The project is structured as a monorepo containing two main components:
+
+*   **Backend (`/api`):** A RESTful API built with Go and the Gin framework, responsible for data management, authentication, and business logic. It uses MongoDB as the primary data store.
+*   **Frontend (`/frontend`):** A dynamic web interface built with SvelteKit and TailwindCSS, providing a responsive and interactive user experience.
+
+## Prerequisites
+
+Before running the project, ensure you have the following installed:
+
+*   **Go:** Version 1.25 or higher (for the API).
+*   **Bun:** Or Node.js (for the Frontend). Bun is recommended for faster package management.
+*   **MongoDB:** A running instance of MongoDB (local or cloud).
+*   **Docker:** (Optional) For containerized deployment.
+
+## Getting Started
+
+### 1. Clone the Repository
+
 ```bash
-go run main.go
+git clone https://github.com/AleCro/GYMApplication
+cd GYMApplication
 ```
-### Backend
-1. Access the `frontend` folder
-2. Install dependencies
+
+### 2. Environment Configuration
+
+You will need to set up environment variables for both the API and the Frontend. Refer to the `README.md` in each directory for specific configuration details.
+
+### 3. Running with Docker (Recommended)
+
+The easiest way to get up and running is using Docker Compose.
+
 ```bash
-bun install
+docker-compose up --build
 ```
-3. Run the program in development mode
-```bash
-bun run dev
-```
-Powered by [yxl-prz/YSvelGoK](https://github.com/yxl-prz/YSvelGoK)
+
+This command will start both the backend and frontend services, along with a MongoDB instance if configured in the compose file.
+
+### 4. Manual Setup
+
+If you prefer to run the services individually, please refer to the specific documentation for each component:
+
+*   [**Backend Documentation**](./api/README.md)
+*   [**Frontend Documentation**](./frontend/README.md)
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
+Powered by [yxl-prz/YSvelGoK](https://github.com/yxl-prz/YSvelGoK).

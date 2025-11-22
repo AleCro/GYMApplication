@@ -1,38 +1,76 @@
-# sv
+# AleGYM Frontend Client
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+The AleGYM Frontend is a modern, responsive web application built to provide an engaging user experience for tracking gym activities. It leverages the power of SvelteKit for server-side rendering and static site generation, combined with TailwindCSS for rapid UI development.
 
-## Creating a project
+## Technology Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+*   **Framework:** [SvelteKit](https://kit.svelte.dev/) - The web framework for building Svelte apps.
+*   **Language:** TypeScript / JavaScript
+*   **Styling:** [TailwindCSS](https://tailwindcss.com/) - A utility-first CSS framework.
+*   **Runtime/Package Manager:** [Bun](https://bun.sh/) (Recommended) or Node.js.
+*   **Build Tool:** Vite.
 
-```sh
-# create a new project in the current directory
-npx sv create
+## Features
 
-# create a new project in my-app
-npx sv create my-app
-```
+*   **Responsive Design:** Optimized for both desktop and mobile devices.
+*   **Interactive Dashboard:** Visualize your progress and upcoming events.
+*   **Goal Tracking UI:** Intuitive interface for managing main goals and sub-goals.
+*   **Secure Authentication:** Seamless login and session management integration with the backend API.
 
-## Developing
+## Installation & Running
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### Prerequisites
+- Bun (preferred) or Node.js installed.
+- The AleGYM API running locally or accessible via network.
 
-```sh
-npm run dev
+### Steps
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+1.  **Navigate to the frontend directory:**
+    ```bash
+    cd frontend
+    ```
 
-## Building
+2.  **Install Dependencies:**
+    ```bash
+    bun install
+    # or
+    npm install
+    ```
 
-To create a production version of your app:
+3.  **Run Development Server:**
+    ```bash
+    bun run dev
+    # or
+    npm run dev
+    ```
+    The application will be available at `http://localhost:5173`.
 
-```sh
+## Building for Production
+
+To create a production-ready build of the application:
+
+```bash
+bun run build
+# or
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+You can preview the production build locally using:
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```bash
+bun run preview
+```
+
+## Project Structure
+
+*   `src/routes/`: Contains the file-system based routing for the application.
+    *   `app/`: Main application routes (protected).
+    *   `auth/`: Authentication routes (login, signup).
+*   `src/lib/`: Shared components, utility functions, and stores.
+*   `static/`: Static assets like images and fonts.
+
+## License
+
+This project is licensed under the MIT License.
+
+Powered by [yxl-prz/YSvelGoK](https://github.com/yxl-prz/YSvelGoK).
